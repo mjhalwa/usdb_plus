@@ -1,0 +1,18 @@
+{
+  "manifest_version": 2,
+  "name": "USDB Plus",
+  "version": "0.1",
+
+  "description": "Deposit your USDB IDs to highlight matching results when browsing USDB IDs",
+
+  "content_scripts": [
+    {
+      "matches": ["https://usdb.animux.de/*?link=list*"],
+      "js": ["scripts/highlight_search_results.js"]
+    },
+    {
+      "matches": ["https://usdb.animux.de/*?link=detail*"],
+      "js": ["scripts/highlight_detail_page.js"]
+    }
+  ]
+}
