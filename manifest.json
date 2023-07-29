@@ -18,6 +18,10 @@
     }
   },
 
+  "options_ui": {
+    "page": "options/options.html"
+  },
+
   "content_scripts": [
     {
       "matches": ["https://usdb.animux.de/*?link=list*"],
@@ -26,10 +30,6 @@
     {
       "matches": ["https://usdb.animux.de/*?link=detail*"],
       "js": ["scripts/highlight_detail_page.js"]
-    },
-    {
-      "matches": ["https://usdb.animux.de/*?link=profil*"],
-      "js": ["scripts/set_config.js"]
     }
   ]
 }
