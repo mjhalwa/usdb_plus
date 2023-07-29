@@ -5,6 +5,19 @@
 
   "description": "Deposit your USDB IDs to highlight matching results when browsing USDB IDs",
 
+  "permissions": [
+    // storage system requires storage permission, https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/storage
+    "storage"
+  ],
+
+  "browser_specific_settings": {
+    "gecko": {
+      // https://extensionworkshop.com/documentation/develop/extensions-and-the-add-on-id/#when-do-you-need-an-add-on-id
+      // > Manifest V2 extensions, you need to add an add-on ID when ... You use WebExtension APIs ... the following APIs: ... storage.sync
+      "id": "usdb-plus@example.com"
+    }
+  },
+
   "content_scripts": [
     {
       "matches": ["https://usdb.animux.de/*?link=list*"],
@@ -13,6 +26,10 @@
     {
       "matches": ["https://usdb.animux.de/*?link=detail*"],
       "js": ["scripts/highlight_detail_page.js"]
+    },
+    {
+      "matches": ["https://usdb.animux.de/*?link=profil*"],
+      "js": ["scripts/set_config.js"]
     }
   ]
 }
