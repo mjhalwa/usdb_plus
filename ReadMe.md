@@ -34,6 +34,8 @@ Web browser extension to provided extras to [USDB](https://usdb.animux.de)
 
   Note: `console.log()` output on Add-on Preferences pages are __NOT visible__ in the usual debugging console. They __ONLY appear__ in the __developer toolbox console__
 
+- [MDN - Submitting an add-on](https://extensionworkshop.com/documentation/publish/submitting-an-add-on/)
+
 Examples
 
 - [MDN - Your first Extension](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Your_first_WebExtension)
