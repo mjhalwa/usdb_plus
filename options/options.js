@@ -16,9 +16,10 @@ function saveOptions(e) {
         "label": label,
         "color": color,
         "ids": [...new Set(ids)] //!< unique ids
-               .sort((a,b) => { if (a<b) {return -1} else if (b>a) {return 1} else { return 0}})
+               .sort((a,b) => { if (a<b) {return -1}; return 1})
       }
     })
+    console.log(new_usdb_config)
 
     browser.storage.sync.set({
       "config": new_usdb_config,
@@ -57,7 +58,9 @@ function restoreOptions() {
         document.querySelector(`#label-${index}`).textContent = scope["label"]
         document.querySelector(`#color-${index}`).value = scope["color"]
         document.querySelector(`#color-${index}`).style["background-color"] = scope["color"]
-        document.querySelector(`#ids-${index}`).value = scope["ids"].sort().join(",")
+        document.querySelector(`#ids-${index}`).value = scope["ids"]
+          .sort((a,b) => { if (a<b) {return -1}; return 1})
+          .join(",")
         const ids_label = document.querySelector(`#ids-${index}`).parentElement
         // ids_label.style["display"] = "flex"
         // ids_label.style["flex-direction"] = "column"
