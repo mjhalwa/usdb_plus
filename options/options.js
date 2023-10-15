@@ -3,23 +3,27 @@ function saveOptions(e) {
   // console.log("save pressed")
 
   browser.storage.sync.get().then( sync_storage => {
-    const new_usdb_config = sync_storage["config"].map( (obj, index) => {
-      label = document.querySelector(`#label-${index}`).textContent
-      color = document.querySelector(`#color-${index}`).value
-      ids = document.querySelector(`#ids-${index}`).value
-            .replace(/\s/g,",")
-            .replace(/,+/g,",")
-            .split(",")
-            .filter(val => val !== "")
-            .map(val => Number(val))
-      return {
-        "label": label,
-        "color": color,
-        "ids": [...new Set(ids)] //!< unique ids
-               .sort((a,b) => { if (a<b) {return -1}; return 1})
-      }
-    })
-    console.log(new_usdb_config)
+    const new_usdb_config = {
+      "general": {
+        "prepend_id_column": document.querySelector("#cb-prepend-id-column").checked
+      },
+      "categories": sync_storage["config"]["categories"].map( (obj, index) => {
+        label = document.querySelector(`#label-${index}`).textContent
+        color = document.querySelector(`#color-${index}`).value
+        ids = document.querySelector(`#ids-${index}`).value
+              .replace(/\s/g,",")
+              .replace(/,+/g,",")
+              .split(",")
+              .filter(val => val !== "")
+              .map(val => Number(val))
+        return {
+          "label": label,
+          "color": color,
+          "ids": [...new Set(ids)] //!< unique ids
+                .sort((a,b) => { if (a<b) {return -1}; return 1})
+        }
+      })
+    }
 
     browser.storage.sync.set({
       "config": new_usdb_config,
@@ -27,7 +31,19 @@ function saveOptions(e) {
 
     restoreOptions()
   })
+}
 
+function get_config_default() {
+  return {
+    "general": {
+      "prepend_id_column": true
+    },
+    "categories": [
+      {"label": "done", "color": "#C3EDC0", "ids": []},
+      {"label": "staged", "color": "#FDFFAE", "ids": []},
+      {"label": "challenging", "color": "#FF9B9B", "ids": []}
+    ]
+  }
 }
 
 function restoreOptions() {
@@ -38,23 +54,24 @@ function restoreOptions() {
   }
 
   browser.storage.sync.get().then( sync_storage => {
-      // console.log(sync_storage)
       // default settings
-      let usdb_config = [
-        {"label": "done", "color": "#C3EDC0", "ids": []},
-        {"label": "staged", "color": "#FDFFAE", "ids": []},
-        {"label": "challenging", "color": "#FF9B9B", "ids": []}
-      ]
+      let usdb_config = {...get_config_default()}
       if ("config" in sync_storage) {
         // retrieve settings from sync storage
         usdb_config = sync_storage["config"]
+        // transition from v0.1.0 to v1.0.0
+        if(Array.isArray(usdb_config)) {
+          usdb_config = {...get_config_default(), "categories": usdb_config}
+          browser.storage.sync.set({"config": usdb_config})
+        }
       } else {
         // set default settings
         browser.storage.sync.set({"config": usdb_config})
       }
 
-      for (let index in usdb_config) {
-        const scope = usdb_config[index]
+      document.querySelector("#cb-prepend-id-column").checked = usdb_config.general.prepend_id_column
+      for (let index in usdb_config.categories) {
+        const scope = usdb_config.categories[index]
         document.querySelector(`#label-${index}`).textContent = scope["label"]
         document.querySelector(`#color-${index}`).value = scope["color"]
         document.querySelector(`#color-${index}`).style["background-color"] = scope["color"]
@@ -68,17 +85,23 @@ function restoreOptions() {
     },
     onError)
 
-    const sections = document.getElementsByTagName("section")
+    const headlines = document.getElementsByTagName("h2")
+    for (let i=0; i<headlines.length; i++) {
+      headlines[i].style["margin-bottom"] = "0.1em"
+    }
+
+    const categoriesSection = document.querySelector("#categories-section")
+    const categoriesHeadline = categoriesSection.getElementsByTagName("h1")[0]
+    categoriesHeadline.style.marginTop = "2em";
+    categoriesHeadline.style.marginBottom = 0
+
+    const sections = categoriesSection.getElementsByTagName("section")
     for (let i=0; i<sections.length; i++) {
       sections[i].style["display"] = "flex"
       sections[i].style["flex-direction"] = "column"
       sections[i].style["gap"] = "0.5em"
     }
-    const headlines = document.getElementsByTagName("h2")
-    for (let i=0; i<headlines.length; i++) {
-      headlines[i].style["margin-bottom"] = "0.1em"
-    }
-    const labels = document.getElementsByTagName("label")
+    const labels = categoriesSection.getElementsByTagName("label")
     for (let i=0; i<labels.length; i++) {
       labels[i].style["display"] = "flex"
       labels[i].style["flex-direction"] = "column"

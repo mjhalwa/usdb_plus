@@ -60,7 +60,7 @@ function prependIdColumn(row, usdb_id) {
  */
 function highlight_row(row, usdb_config, usdb_id) {
   if (!isHeaderRow(row)) {
-    for (let conf of usdb_config) {
+    for (let conf of usdb_config.categories) {
       if (conf.ids.includes(usdb_id)) {
         row.style["background-color"] = `${conf.color}`
         break
@@ -78,7 +78,9 @@ browser.storage.sync.get().then( sync_storage => {
             
     for ( let i=0; i<result_rows.length; i++ ) {
       const usdb_id = get_row_usdb_id(result_rows[i])
-      prependIdColumn(result_rows[i], usdb_id)
+      if (usdb_config.general.prepend_id_column) {
+        prependIdColumn(result_rows[i], usdb_id)
+      }
       highlight_row(result_rows[i], usdb_config, usdb_id)
     }
   } else {

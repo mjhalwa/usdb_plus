@@ -10,7 +10,7 @@ browser.storage.sync.get().then( sync_storage => {
 
 
 
-    for (let conf of usdb_config) {
+    for (let conf of usdb_config.categories) {
       console.log(conf)
       if (conf.ids.includes(usdb_id)) {
         console.log("found")
