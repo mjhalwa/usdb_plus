@@ -1,0 +1,28 @@
+[
+  {
+    "label": "done",
+    "ids": [
+      16870,
+      18135,
+      18477
+    ],
+    "color": "#C3EDC0"
+  },
+  {
+    "label": "staged",
+    "ids": [
+      11289,
+      16581,
+      17572,
+      21605
+    ],
+    "color": "#FDFFAE"
+  },
+  {
+    "label": "challenging",
+    "ids": [
+      21199
+    ],
+    "color": "#FF9B9B"
+  }
+]
