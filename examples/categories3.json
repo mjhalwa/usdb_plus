@@ -1,0 +1,30 @@
+[
+  {
+    "label": "Donatello",
+    "ids": [
+      3,13,14
+    ],
+    "color": "#43C0C7"
+  },
+  {
+    "label": "Leonardo",
+    "ids": [
+      4,21,17
+    ],
+    "color": "#C6C742"
+  },
+  {
+    "label": "Michelangelo",
+    "ids": [
+      6,27,23
+    ],
+    "color": "#43C0C7"
+  },
+  {
+    "label": "Rafael",
+    "ids": [
+      5,32,21
+    ],
+    "color": "#C6C742"
+  }
+]
