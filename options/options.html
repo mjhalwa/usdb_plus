@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <title>USDB Plus Extension Configuration</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" type="text/css" href="styles.css">
   </head>
 
   <body>
@@ -11,15 +12,25 @@
 
       <section id="general-section">
         <h1>General Settings</h1>
+
         <label>
           <input type="checkbox" id="cb-prepend-id-column" />
           add ID column to Search results
+        </label>
+
+        <label id="categories-url-label">
+          Categories from URL
+          <input type="url" id="le-categories-url"
+                 pattern="^https?://\S+$"
+                 placeholder="https://raw.githubusercontent.com/..."
+                 title="URL to a raw JSON-file. Examples: github (https://raw.githubusercontent.com/...), dropbox (https://dl.dropbox.com/...)" />
+          <button id="url-reload-btn" type="button">reload</button>
         </label>
       </section>
 
       <section id="categories-section">
         <h1>USDB ID Categories</h1>
-          <section>
+        <section>
           <h2 id="label-0">0. Label</h2>
           <label>color
             <input type="text" id="color-0" name="color-0" placeholder="#C3EDC0" pattern="^#[a-fA-F0-9]{6}$"
@@ -62,8 +73,27 @@
         </section>
       </section>
 
-      <button type="submit">Save</button>
+      <button id="save-btn" type="submit">Save</button>
     </form>
+
+    <div id="success-msg">Configuration Saved</div>
+    <div id="error-msg">Configuration Saved</div>
+
+    <template id="category-section-template">
+      <section>
+        <h2>Some Label</h2>
+        <label>color
+          <input type="text" placeholder="#C3EDC0" pattern="^#[a-fA-F0-9]{6}$"
+                title="highlight color for this category of usdb IDs as '#' prepended hex color code"
+                />
+        </label>
+        <label>USDB IDs
+          <textarea rows="4" placeholder="5044,21652,21652,27889"
+                    title="comma or newline separated list of usdb IDs"
+                    ></textarea>
+        </label>
+      </section>
+    </template>  
 
     <script src="options.js"></script>
   </body>
