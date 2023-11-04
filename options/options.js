@@ -42,6 +42,7 @@ function saveOptions(e) {
     const new_usdb_config = {
       "general": {
         "prepend_id_column": document.querySelector("#cb-prepend-id-column").checked,
+        "remove_on_click": document.querySelector("#cb-remove-onclick").checked,
         "categories_url": document.querySelector("#le-categories-url").value
       },
       /* https://stackoverflow.com/a/53350150
@@ -83,6 +84,7 @@ function get_config_default() {
   return {
     "general": {
       "prepend_id_column": true,
+      "remove_on_click": true,
       "categories_url": ""
     },
     "categories": [
@@ -154,6 +156,7 @@ function restoreOptions() {
       }
 
       document.querySelector("#cb-prepend-id-column").checked = usdb_config.general.prepend_id_column
+      document.querySelector("#cb-remove-onclick").checked = usdb_config.general.remove_on_click
       document.querySelector("#le-categories-url").value = usdb_config.general.categories_url
       writeCategories(usdb_config.categories)
     },

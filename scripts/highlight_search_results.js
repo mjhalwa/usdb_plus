@@ -53,6 +53,15 @@ function prependIdColumn(row, usdb_id) {
   }
 }
 
+function removeOnClick(row) {
+  if (!isHeaderRow(row)) {
+    [...row.querySelectorAll("td")].map(td => {
+      td.removeAttribute("onclick")
+      td.style.cursor = "auto"
+    })
+  }
+}
+
 /**
  * apply row background color based on configuration and usdb_id
  * @param {*} row 
@@ -80,6 +89,9 @@ browser.storage.sync.get().then( sync_storage => {
       const usdb_id = get_row_usdb_id(result_rows[i])
       if (usdb_config.general.prepend_id_column) {
         prependIdColumn(result_rows[i], usdb_id)
+      }
+      if (usdb_config.general.remove_on_click) {
+        removeOnClick(result_rows[i])
       }
       highlight_row(result_rows[i], usdb_config, usdb_id)
     }
