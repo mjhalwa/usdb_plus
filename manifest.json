@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "USDB Plus",
-  "version": "0.1",
+  "version": "1.0.0",
 
   "description": "Deposit your USDB IDs to highlight matching results when browsing USDB IDs",
 
@@ -14,7 +14,7 @@
     "gecko": {
       // https://extensionworkshop.com/documentation/develop/extensions-and-the-add-on-id/#when-do-you-need-an-add-on-id
       // > Manifest V2 extensions, you need to add an add-on ID when ... You use WebExtension APIs ... the following APIs: ... storage.sync
-      "id": "usdb-plus@example.com"
+      "id": "usdb-plus@amo.example.com"
     }
   },
 
