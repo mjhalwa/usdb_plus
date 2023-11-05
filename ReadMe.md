@@ -29,12 +29,20 @@ Web browser extension to provided extras to [USDB](https://usdb.animux.de)
   
   > It is a JSON-formatted file, with one exception: __it is allowed to contain "//"-style comments.__
 
+- [MDN - icons](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/icons)
+
+  > You can use SVG and the browser will scale your icon appropriately. There are currently two caveats though:
+  > 1. You need to specify a viewBox in the image. E.g.: `viewBox="0 0 48 48"` [for size `"48"`]
+  > 2. Even though you can use one file, you still need to specify various size of the icon in your manifest.
+
 - [MDN - Debugging - Developer tools toolbox](https://extensionworkshop.com/documentation/develop/debugging/#developer-tools-toolbox)
 - [MDN - Options page](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/user_interface/Options_pages)
 
   Note: `console.log()` output on Add-on Preferences pages are __NOT visible__ in the usual debugging console. They __ONLY appear__ in the __developer toolbox console__
 
 - [MDN - Submitting an add-on](https://extensionworkshop.com/documentation/publish/submitting-an-add-on/)
+
+- [Extension Workshop - Developing extensions for Firefox for Android](https://extensionworkshop.com/documentation/develop/developing-extensions-for-firefox-for-android/)
 
 Examples
 
