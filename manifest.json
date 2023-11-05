@@ -3,8 +3,14 @@
   "name": "USDB Plus",
   "version": "1.0.0",
 
-  "description": "Deposit your USDB IDs to highlight matching results when browsing USDB IDs",
+  "description": "Customize UI of usdb.animux.de",
 
+  "icons": {
+    "32": "icon.svg",
+    "64": "icon.svg",
+    "128": "icon.svg"
+  },
+  
   "permissions": [
     // storage system requires storage permission, https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/storage
     "storage"
