@@ -2,7 +2,17 @@
 
 ![Firefox Extension Badge](https://img.shields.io/badge/Mozilla_Firefox-Mozilla_Firefox_Webbrowser?logo=firefoxbrowser&color=%2300539F)
 
+<a href="https://addons.mozilla.org/addon/usdb-plus/"><img src="https://user-images.githubusercontent.com/585534/107280546-7b9b2a00-6a26-11eb-8f9f-f95932f4bfec.png" alt="Get USDB Plus for Firefox"></a>
+
 Web browser extension to provided extras to [USDB](https://usdb.animux.de)
+
+with
+
+![screenshot of a search result page with this Add-on enabled](./screenshots/search-result-on.png)
+
+without
+
+![screenshot of a search result page without this Add-on enabled](./screenshots/search-result-off.png)
 
 ## Features
 
