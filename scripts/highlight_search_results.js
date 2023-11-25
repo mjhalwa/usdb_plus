@@ -12,6 +12,10 @@ function get_row_usdb_id(row) {
   return usdb_id
 }
 
+function setRowId(row, usdb_id) {
+  row.setAttribute("id", `row_${usdb_id}`)
+}
+
 function prependIdColumn(row, usdb_id) {
   const first_original_column = row.children[0]
   if (isHeaderRow(row)) {
@@ -87,6 +91,7 @@ browser.storage.sync.get().then( sync_storage => {
             
     for ( let i=0; i<result_rows.length; i++ ) {
       const usdb_id = get_row_usdb_id(result_rows[i])
+      setRowId(result_rows[i], usdb_id)
       if (usdb_config.general.prepend_id_column) {
         prependIdColumn(result_rows[i], usdb_id)
       }
