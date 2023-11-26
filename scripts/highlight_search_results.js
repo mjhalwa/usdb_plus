@@ -195,6 +195,7 @@ function addColumnsFromEditPage(row, usdb_config, usdb_id) {
           if (col in metatags) {
             const div = document.createElement("div");
             div.textContent=col
+            div.title=metatags[col]
             col_i.replaceChild(div, col_i.firstElementChild)
           } else {
             col_i.removeChild(col_i.firstElementChild)
