@@ -136,7 +136,7 @@ function createSpinner() {
 
 function updateButtonText(audio, isPlaying) {
   const playButton = document.querySelector(`#play_${audio.id}`);
-  playButton.textContent = isPlaying ? '⏸' : '⏵';
+  playButton.textContent = isPlaying ? '❚❚' : '▶︎';
 }
 
 function togglePlayPause(audioId) {
@@ -163,7 +163,7 @@ function addColumnsFromEditPage(row, usdb_config, usdb_id) {
   const last_column = row.lastElementChild
   if (isHeaderRow(row)) {
     const th_sample = document.createElement("td");  //!< Note: usdb uses <td> for heads
-    th_sample.textContent = "⏵/⏸"
+    th_sample.textContent = "▶︎/❚❚"
     row.insertBefore(th_sample, first_column)
 
     const th_usdb_cover = document.createElement("td");  //!< Note: usdb uses <td> for heads
@@ -232,7 +232,7 @@ function addColumnsFromEditPage(row, usdb_config, usdb_id) {
           audio.appendChild(source)
           const playButton = document.createElement("button")
           playButton.onclick = () => togglePlayPause(`audio_${usdb_id}`)
-          playButton.textContent = "⏵"
+          playButton.textContent = "▶︎"
           playButton.setAttribute("id", `play_audio_${usdb_id}`)
           sample_col.replaceChild(audio, sample_col.firstElementChild)
           sample_col.appendChild(playButton)
