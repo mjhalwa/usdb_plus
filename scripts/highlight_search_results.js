@@ -128,6 +128,10 @@ function addColumnsFromEditPage(row, usdb_config, usdb_id) {
     th_sample.textContent = "⏵/⏸"
     row.insertBefore(th_sample, first_column)
 
+    const th_usdb_cover = document.createElement("td");  //!< Note: usdb uses <td> for heads
+    th_usdb_cover.textContent = "Cover"
+    row.insertBefore(th_usdb_cover, first_column)
+
     for (col of ["v","a","co","bg"]) {
       const th_i = document.createElement("td");  //!< Note: usdb uses <td> for heads
       th_i.textContent = col
@@ -143,6 +147,10 @@ function addColumnsFromEditPage(row, usdb_config, usdb_id) {
     td_sample.appendChild(createSpinner())
     row.insertBefore(td_sample, first_column)
 
+    const td_usdb_cover = document.createElement("td");
+    td_usdb_cover.classList.add("usdb_cover")
+    td_usdb_cover.appendChild(createSpinner())
+    row.insertBefore(td_usdb_cover, first_column)
 
     for (col of ["v","a","co","bg"]) {
       const td_i = document.createElement("td");  //!< Note: usdb uses <td> for heads
@@ -168,6 +176,8 @@ function addColumnsFromEditPage(row, usdb_config, usdb_id) {
         // temp_element.appendChild(parsedDocument.body);
         temp_element.innerHTML = htmlString;
 
+        const coverInput = temp_element.querySelector('#editCoverSampleTable input[name="coverinput"]')
+        const coverHref = coverInput.value
         const sampleInput = temp_element.querySelector('#editCoverSampleTable input[name="sampleinput"]')
         const sampleHref = sampleInput.value
         const txtTextarea = temp_element.querySelector('table textarea[name="txt"]')
@@ -176,13 +186,13 @@ function addColumnsFromEditPage(row, usdb_config, usdb_id) {
 
         const sample_col = document.querySelector(`#row_${usdb_id} .sample`)
         if (sampleHref) {
-          const source = document.createElement("source");
+          const source = document.createElement("source")
           source.src = sampleHref
           source.type="audio/mpeg"
-          const audio = document.createElement("audio");
+          const audio = document.createElement("audio")
           audio.setAttribute("id", `audio_${usdb_id}`)
           audio.appendChild(source)
-          const playButton = document.createElement("button");
+          const playButton = document.createElement("button")
           playButton.onclick = () => togglePlayPause(`audio_${usdb_id}`)
           playButton.textContent = "⏵"
           playButton.setAttribute("id", `play_audio_${usdb_id}`)
@@ -191,6 +201,20 @@ function addColumnsFromEditPage(row, usdb_config, usdb_id) {
         } else {
           sample_col.removeChild(sample_col.firstElementChild)
         }
+
+        const usdb_cover_col = document.querySelector(`#row_${usdb_id} .usdb_cover`)
+        usdb_cover_col.style.height = "4em"
+        usdb_cover_col.style.width = usdb_cover_col.style.height
+        if (coverHref) {
+          const img = document.createElement("img")
+          img.src = coverHref
+          img.style.height = "100%"
+          img.style.aspectRatio = "1 / 1"
+          usdb_cover_col.replaceChild(img, usdb_cover_col.firstElementChild)
+        } else {
+          usdb_cover_col.removeChild(usdb_cover_col.firstElementChild)
+        }
+
         metatags = metatags_str.replace(/^#VIDEO:/,"").split(",").reduce((prev,curr) => {
           i = curr.search("=")
           value = curr.split("=")
