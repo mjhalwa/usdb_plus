@@ -133,6 +133,10 @@ function addColumnsFromEditPage(row, usdb_config, usdb_id) {
       th_i.textContent = col
       row.insertBefore(th_i, last_column)
     }
+
+    const th_players = document.createElement("td");  //!< Note: usdb uses <td> for heads
+    th_players.textContent = "p1/p2"
+    row.insertBefore(th_players, last_column)
   } else {
     const td_sample = document.createElement("td");
     td_sample.classList.add("sample")
@@ -146,6 +150,11 @@ function addColumnsFromEditPage(row, usdb_config, usdb_id) {
       td_i.appendChild(createSpinner())
       row.insertBefore(td_i, last_column)
     }
+
+    const td_players = document.createElement("td");  //!< Note: usdb uses <td> for heads
+    td_players.classList.add("players")
+    td_players.appendChild(createSpinner())
+    row.insertBefore(td_players, last_column)
 
     fetch(`https://usdb.animux.de/?link=editsongs&id=${usdb_id}`)
       .then(res => res.text())
@@ -192,15 +201,18 @@ function addColumnsFromEditPage(row, usdb_config, usdb_id) {
  
         for (col of ["v","a","co","bg"]) {
           const col_i = document.querySelector(`#row_${usdb_id} .${col}`)
+          col_i.removeChild(col_i.firstElementChild)
           if (col in metatags) {
-            const div = document.createElement("div");
-            div.textContent=col
-            div.title=metatags[col]
-            col_i.replaceChild(div, col_i.firstElementChild)
-          } else {
-            col_i.removeChild(col_i.firstElementChild)
+            col_i.textContent=col
+            col_i.title=metatags[col]
           }
-        }    
+        }
+        
+        const col_players = document.querySelector(`#row_${usdb_id} .players`)
+        col_players.removeChild(col_players.firstElementChild)
+        if ("p1" in metatags && "p2" in metatags) {
+          col_players.textContent=`${metatags["p1"]} / ${metatags["p2"]}`
+        }
       })
   }
 }
