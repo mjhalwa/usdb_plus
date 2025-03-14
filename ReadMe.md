@@ -22,13 +22,31 @@ without
 
 ## Development
 
+using `nodejs == v18.20.7`
+
+``` powershell
+npm install --dev
+```
+
+Debug in the browser:
+
 1. Open Firefox
 2. Goto `about:debugging`
 3. Click __This Firefox__ in left sidenav
 4. Click __Load Temporary Add-on__ on the top right
 5. Select `manifest.json`
 6. Goto [usdb.animux.de](usdb.animux.de) and try out
-7. Change source and click __Reload__ button if you changed source to view results
+
+Apply changes:
+
+1. change js code in `src` directory
+2. build `.bundle.js` files by replacing imports with function bodies
+
+    ``` powershell
+    npm run build
+    ```
+
+3. click __Reload__ button in `about:debugging`
 
 ## Links
 
