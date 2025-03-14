@@ -110,11 +110,20 @@ function saveOptions(e) {
 
     browser.storage.sync.set({
       "config": new_usdb_config,
-    });
-
-    restoreOptions()
-
-    showSuccess()
+    }).then(
+      () => {
+        restoreOptions()
+        showSuccess()
+      },
+      (error) => {
+        if (error.message.startsWith("QuotaExceededError")) {
+          showError("saving changes failed, not enough space available")
+        } else {
+          showError(`saving changes failed due to ${error.message}`)
+          console.error(error)
+        }
+      }
+    );
   })
 }
 
