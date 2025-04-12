@@ -12,22 +12,38 @@ function get_config_default() {
   }
 }
 
-function get_config_or_set_default(sync_storage) {
-  // default settings
-  let usdb_config = {...get_config_default()};
-  if ("config" in sync_storage) {
-    // retrieve settings from sync storage
-    usdb_config = sync_storage["config"];
-    // transition from v0.1.0 to v1.0.0
-    if(Array.isArray(usdb_config)) {
-      usdb_config = {...get_config_default(), "categories": usdb_config};
-      browser.storage.sync.set({"config": usdb_config});
+function set_config(
+  new_usdb_config,
+  onSuccess = () => {},
+  onError = (error) => {console.error(error);}
+) {
+  browser.storage.sync.set({
+    "config": new_usdb_config,
+  }).then(
+    onSuccess,
+    onError
+  );
+}
+
+function get_config_or_set_default() {
+  return browser.storage.sync.get().then( sync_storage => {
+
+    // default settings
+    let usdb_config = {...get_config_default()};
+    if ("config" in sync_storage) {
+      // retrieve settings from sync storage
+      usdb_config = sync_storage["config"];
+      // transition from v0.1.0 to v1.0.0
+      if(Array.isArray(usdb_config)) {
+        usdb_config = {...get_config_default(), "categories": usdb_config};
+        set_config(usdb_config);
+      }
+    } else {
+      // set default settings
+      set_config(usdb_config);
     }
-  } else {
-    // set default settings
-    browser.storage.sync.set({"config": usdb_config});
-  }
-  return usdb_config
+    return usdb_config
+  })
 }
 
 function showSuccess() {
@@ -70,54 +86,52 @@ function saveOptions(e) {
   e.preventDefault();
   // console.log("save pressed")
 
-  browser.storage.sync.get().then( sync_storage => {
-    const new_usdb_config = {
-      "general": {
-        "prepend_id_column": document.querySelector("#cb-prepend-id-column").checked,
-        "remove_on_click": document.querySelector("#cb-remove-onclick").checked,
-        "categories_url": document.querySelector("#le-categories-url").value
-      },
-      /* https://stackoverflow.com/a/53350150
-       * > If you're using ES6, you can use [...selectors] syntax, like this:
-       */
-      "categories": [
-          ...document.querySelector("#categories-section").querySelectorAll("section")
-        ].map( (obj, index) => {
-          label = document.querySelector(`#label-${index}`).textContent;
-          color = document.querySelector(`#color-${index}`).value;
-          ids = document.querySelector(`#ids-${index}`).value
-                .replace(/\s/g,",")
-                .replace(/,+/g,",")
-                .split(",")
-                .filter(val => val !== "")
-                .map(val => Number(val));
-          return {
-            "label": label,
-            "color": color,
-            "ids": [...new Set(ids)] //!< unique ids
-                  .sort((a,b) => { if (a<b) {return -1} return 1})
-          }
-      })
-    };
-    // console.log(new_usdb_config)
-
-    browser.storage.sync.set({
-      "config": new_usdb_config,
-    }).then(
-      () => {
-        restoreOptions();
-        showSuccess();
-      },
-      (error) => {
-        if (error.message.startsWith("QuotaExceededError")) {
-          showError("saving changes failed, not enough space available");
-        } else {
-          showError(`saving changes failed due to ${error.message}`);
-          console.error(error);
+  const new_usdb_config = {
+    "general": {
+      "prepend_id_column": document.querySelector("#cb-prepend-id-column").checked,
+      "remove_on_click": document.querySelector("#cb-remove-onclick").checked,
+      "categories_url": document.querySelector("#le-categories-url").value
+    },
+    /* https://stackoverflow.com/a/53350150
+      * > If you're using ES6, you can use [...selectors] syntax, like this:
+      */
+    "categories": [
+        ...document.querySelector("#categories-section").querySelectorAll("section")
+      ].map( (obj, index) => {
+        label = document.querySelector(`#label-${index}`).textContent;
+        color = document.querySelector(`#color-${index}`).value;
+        ids = document.querySelector(`#ids-${index}`).value
+              .replace(/\s/g,",")
+              .replace(/,+/g,",")
+              .split(",")
+              .filter(val => val !== "")
+              .map(val => Number(val));
+        return {
+          "label": label,
+          "color": color,
+          "ids": [...new Set(ids)] //!< unique ids
+                .sort((a,b) => { if (a<b) {return -1} return 1})
         }
+    })
+  };
+  // console.log(new_usdb_config)
+
+  set_config(
+    new_usdb_config,
+    () => {
+      restoreOptions();
+      showSuccess();
+    },
+    (error) => {
+      if (error.message.startsWith("QuotaExceededError")) {
+        showError("saving changes failed, not enough space available");
+        console.error(error);
+      } else {
+        showError(`saving changes failed due to ${error.message}`);
+        console.error(error);
       }
-    );
-  });
+    }
+  );
 }
 
 function getCategorySectionTemplate() {
@@ -163,14 +177,15 @@ function restoreOptions() {
   function onError(error) {
     showError(error);
   }
-  browser.storage.sync.get().then( sync_storage => {
-      const usdb_config = get_config_or_set_default(sync_storage);
+  get_config_or_set_default().then( usdb_config => {
+      console.log(usdb_config);
       document.querySelector("#cb-prepend-id-column").checked = usdb_config.general.prepend_id_column;
       document.querySelector("#cb-remove-onclick").checked = usdb_config.general.remove_on_click;
       document.querySelector("#le-categories-url").value = usdb_config.general.categories_url;
       writeCategories(usdb_config.categories);
     },
-    onError);
+    onError
+  );
 }
 
 function reloadCategoriesFromUrl() {

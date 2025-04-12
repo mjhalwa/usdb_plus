@@ -268,8 +268,7 @@ function highlight_row(row, usdb_config, usdb_id) {
   }
 }
 
-browser.storage.sync.get().then( sync_storage => {
-    const usdb_config = get_config_or_set_default(sync_storage)
+get_config_or_set_default().then( usdb_config => {
     const result_table = document.getElementById("tablebg").getElementsByTagName("table")[0]
     const result_rows = result_table.getElementsByTagName("tr")
             
