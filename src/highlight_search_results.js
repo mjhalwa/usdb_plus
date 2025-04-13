@@ -122,7 +122,7 @@ function togglePlayPause(audioId) {
   }
 }
 
-function addColumnsFromEditPage(row, usdb_config, usdb_id) {
+async function addColumnsFromEditPage(row, usdb_id) {
   const first_column = row.firstElementChild
   const last_column = row.lastElementChild
   if (isHeaderRow(row)) {
@@ -166,80 +166,78 @@ function addColumnsFromEditPage(row, usdb_config, usdb_id) {
     td_players.appendChild(createSpinner())
     row.insertBefore(td_players, last_column)
 
-    fetch(`https://usdb.animux.de/?link=editsongs&id=${usdb_id}`)
-      .then(res => res.text())
-      .then(htmlString => {
-        // create a temporary container
-        const temp_element = document.createElement("div")
-        // // Parse the HTML string and append it to the container using DOMParser
-        // // should be save then using .innerHTML directly
-        // const parser = new DOMParser();
-        // const parsedDocument = parser.parseFromString(htmlString, 'text/html');
-        // temp_element.appendChild(parsedDocument.body);
-        temp_element.innerHTML = htmlString;
+    const res = await fetch(`https://usdb.animux.de/?link=editsongs&id=${usdb_id}`)
+    const htmlString = await res.text()
+    // create a temporary container
+    const temp_element = document.createElement("div")
+    // // Parse the HTML string and append it to the container using DOMParser
+    // // should be save then using .innerHTML directly
+    // const parser = new DOMParser();
+    // const parsedDocument = parser.parseFromString(htmlString, 'text/html');
+    // temp_element.appendChild(parsedDocument.body);
+    temp_element.innerHTML = htmlString;
 
-        const coverInput = temp_element.querySelector('#editCoverSampleTable input[name="coverinput"]')
-        const coverHref = coverInput.value
-        const sampleInput = temp_element.querySelector('#editCoverSampleTable input[name="sampleinput"]')
-        const sampleHref = sampleInput.value
-        const txtTextarea = temp_element.querySelector('table textarea[name="txt"]')
-        const txt = txtTextarea.textContent
-        const metatags_str = txt.split("\n").filter(line => line.startsWith("#VIDEO"))[0]
+    const coverInput = temp_element.querySelector('#editCoverSampleTable input[name="coverinput"]')
+    const coverHref = coverInput.value
+    const sampleInput = temp_element.querySelector('#editCoverSampleTable input[name="sampleinput"]')
+    const sampleHref = sampleInput.value
+    const txtTextarea = temp_element.querySelector('table textarea[name="txt"]')
+    const txt = txtTextarea.textContent
+    const metatags_str = txt.split("\n").filter(line => line.startsWith("#VIDEO"))[0]
 
-        const sample_col = document.querySelector(`#row_${usdb_id} .sample`)
-        if (sampleHref) {
-          const source = document.createElement("source")
-          source.src = sampleHref
-          source.type="audio/mpeg"
-          const audio = document.createElement("audio")
-          audio.setAttribute("id", `audio_${usdb_id}`)
-          audio.appendChild(source)
-          const playButton = document.createElement("button")
-          playButton.onclick = () => togglePlayPause(`audio_${usdb_id}`)
-          playButton.textContent = "▶︎"
-          playButton.setAttribute("id", `play_audio_${usdb_id}`)
-          sample_col.replaceChild(audio, sample_col.firstElementChild)
-          sample_col.appendChild(playButton)
-        } else {
-          sample_col.removeChild(sample_col.firstElementChild)
-        }
+    const sample_col = document.querySelector(`#row_${usdb_id} .sample`)
+    if (sampleHref) {
+      const source = document.createElement("source")
+      source.src = sampleHref
+      source.type="audio/mpeg"
+      const audio = document.createElement("audio")
+      audio.setAttribute("id", `audio_${usdb_id}`)
+      audio.appendChild(source)
+      const playButton = document.createElement("button")
+      playButton.onclick = () => togglePlayPause(`audio_${usdb_id}`)
+      playButton.textContent = "▶︎"
+      playButton.setAttribute("id", `play_audio_${usdb_id}`)
+      sample_col.replaceChild(audio, sample_col.firstElementChild)
+      sample_col.appendChild(playButton)
+    } else {
+      sample_col.removeChild(sample_col.firstElementChild)
+    }
 
-        const usdb_cover_col = document.querySelector(`#row_${usdb_id} .usdb_cover`)
-        usdb_cover_col.style.height = "4em"
-        usdb_cover_col.style.width = usdb_cover_col.style.height
-        if (coverHref) {
-          const img = document.createElement("img")
-          img.src = coverHref
-          img.style.height = "100%"
-          img.style.aspectRatio = "1 / 1"
-          usdb_cover_col.replaceChild(img, usdb_cover_col.firstElementChild)
-        } else {
-          usdb_cover_col.removeChild(usdb_cover_col.firstElementChild)
-        }
+    const usdb_cover_col = document.querySelector(`#row_${usdb_id} .usdb_cover`)
+    usdb_cover_col.style.height = "4em"
+    usdb_cover_col.style.width = usdb_cover_col.style.height
+    if (coverHref) {
+      const img = document.createElement("img")
+      img.src = coverHref
+      img.style.height = "100%"
+      img.style.aspectRatio = "1 / 1"
+      usdb_cover_col.replaceChild(img, usdb_cover_col.firstElementChild)
+    } else {
+      usdb_cover_col.removeChild(usdb_cover_col.firstElementChild)
+    }
 
-        metatags = metatags_str.replace(/^#VIDEO:/,"").split(",").reduce((prev,curr) => {
-          i = curr.search("=")
-          value = curr.split("=")
-          key = value[0]
-          value = value.slice(1).join("=")
-          return {...prev, [key]: value}
-        }, {})
- 
-        for (col of ["v","a","co","bg"]) {
-          const col_i = document.querySelector(`#row_${usdb_id} .${col}`)
-          col_i.removeChild(col_i.firstElementChild)
-          if (col in metatags) {
-            col_i.textContent=col
-            col_i.title=metatags[col]
-          }
-        }
-        
-        const col_players = document.querySelector(`#row_${usdb_id} .players`)
-        col_players.removeChild(col_players.firstElementChild)
-        if ("p1" in metatags && "p2" in metatags) {
-          col_players.textContent=`${metatags["p1"]} / ${metatags["p2"]}`
-        }
-      })
+    metatags = metatags_str.replace(/^#VIDEO:/,"").split(",").reduce((prev,curr) => {
+      i = curr.search("=")
+      value = curr.split("=")
+      key = value[0]
+      value = value.slice(1).join("=")
+      return {...prev, [key]: value}
+    }, {})
+
+    for (col of ["v","a","co","bg"]) {
+      const col_i = document.querySelector(`#row_${usdb_id} .${col}`)
+      col_i.removeChild(col_i.firstElementChild)
+      if (col in metatags) {
+        col_i.textContent=col
+        col_i.title=metatags[col]
+      }
+    }
+    
+    const col_players = document.querySelector(`#row_${usdb_id} .players`)
+    col_players.removeChild(col_players.firstElementChild)
+    if ("p1" in metatags && "p2" in metatags) {
+      col_players.textContent=`${metatags["p1"]} / ${metatags["p2"]}`
+    }
   }
 }
 
@@ -255,11 +253,12 @@ function removeOnClick(row) {
 /**
  * apply row background color based on configuration and usdb_id
  * @param {*} row 
+ * @param {*} commonConfig
  * @param {*} usdb_id 
  */
-function highlight_row(row, usdb_config, usdb_id) {
+function highlight_row(row, commonConfig, usdb_id) {
   if (!isHeaderRow(row)) {
-    for (let conf of usdb_config.categories) {
+    for (let conf of commonConfig.categories) {
       if (conf.ids.includes(usdb_id)) {
         row.style["background-color"] = `${conf.color}`
         break
@@ -268,21 +267,29 @@ function highlight_row(row, usdb_config, usdb_id) {
   }
 }
 
-get_config_or_set_default().then( usdb_config => {
-    const result_table = document.getElementById("tablebg").getElementsByTagName("table")[0]
-    const result_rows = result_table.getElementsByTagName("tr")
-            
-    for ( let i=0; i<result_rows.length; i++ ) {
-      const usdb_id = get_row_usdb_id(result_rows[i])
-      setRowId(result_rows[i], usdb_id)
-      if (usdb_config.general.prepend_id_column) {
-        prependIdColumn(result_rows[i], usdb_id)
-      }
-      addColumnsFromEditPage(result_rows[i], usdb_config, usdb_id)
-      if (usdb_config.general.remove_on_click) {
-        removeOnClick(result_rows[i])
-      }
-      highlight_row(result_rows[i], usdb_config, usdb_id)
+(async () => {
+  // required work-around instead of top-level async/await until type="module" is supported in manifest.json
+
+  // on every page load
+  // ... first get config
+  const usdb_config = await get_config_or_set_default()
+  const pageConfig = usdb_config.page.search_results;
+  const commonConfig = usdb_config.common;
+
+  // ... then execute
+  const result_table = document.getElementById("tablebg").getElementsByTagName("table")[0]
+  const result_rows = result_table.getElementsByTagName("tr")
+          
+  for ( let i=0; i<result_rows.length; i++ ) {
+    const usdb_id = get_row_usdb_id(result_rows[i])
+    setRowId(result_rows[i], usdb_id)
+    if (pageConfig.prepend_id_column) {
+      prependIdColumn(result_rows[i], usdb_id)
     }
+    await addColumnsFromEditPage(result_rows[i], usdb_id)
+    if (pageConfig.remove_on_click) {
+      removeOnClick(result_rows[i])
+    }
+    highlight_row(result_rows[i], commonConfig, usdb_id)
   }
-)
+})();

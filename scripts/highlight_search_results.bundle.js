@@ -1,49 +1,122 @@
 function get_config_default() {
   // console.log("get_config_default")
   return {
-    "general": {
-      "prepend_id_column": true,
-      "remove_on_click": true,
-      "categories_url": ""
+    "page": {
+      "search_results": {
+        "prepend_id_column": true,
+        "remove_on_click": true,
+      }
     },
-    "categories": [
-      {"label": "My Songs", "color": "#C3EDC0", "ids": []}
-    ]
+    "common": {
+      "categories_url": "",
+      "categories": [
+        {"label": "My Songs", "color": "#C3EDC0", "ids": []}
+      ]
+    },
+    "legacy": {
+      "syncStorageImportDone": false
+    }
   }
 }
 
-function set_config(
-  new_usdb_config,
-  onSuccess = () => {},
-  onError = (error) => {console.error(error);}
-) {
-  browser.storage.sync.set({
-    "config": new_usdb_config,
-  }).then(
-    onSuccess,
-    onError
-  );
+const CONFIG_KEY = "usdb_plus";
+
+async function set_config(new_usdb_config) {
+  await browser.storage.local.set({[CONFIG_KEY]: new_usdb_config});
 }
 
-function get_config_or_set_default() {
-  return browser.storage.sync.get().then( sync_storage => {
+/**
+ * check for configs still in sync storage as in versions <=1.2.0 and
+ * import them to local storage, deletes sync storage config
+ * @param {*} usdb_config currently valid configuration
+ * @returns {Promise} reolving valid config of open imports from sync storage,
+ *          else input `usdb_config` with checked `legacy.syncStorageImportDone`
+ */
+async function try_import_from_sync_storage(usdb_config) {
+  const new_usdb_config = {...usdb_config};  // be sure to deep copy
+  const OLD_CONFIG_KEY = "config";
+  const sync_storage = await browser.storage.sync.get();
+  console.log("sync_storage");
+  console.log(sync_storage);
 
-    // default settings
-    let usdb_config = {...get_config_default()};
-    if ("config" in sync_storage) {
-      // retrieve settings from sync storage
-      usdb_config = sync_storage["config"];
-      // transition from v0.1.0 to v1.0.0
-      if(Array.isArray(usdb_config)) {
-        usdb_config = {...get_config_default(), "categories": usdb_config};
-        set_config(usdb_config);
-      }
-    } else {
-      // set default settings
-      set_config(usdb_config);
+  if (OLD_CONFIG_KEY in sync_storage) {
+    // retrieve settings from sync storage
+    let old_usdb_config = sync_storage[OLD_CONFIG_KEY];
+
+    // transition from v0.1.0 to v1.0.0
+    if(Array.isArray(old_usdb_config)) {
+      old_usdb_config = {
+        "general": {
+          // adding default values here
+          "prepend_id_column": true,
+          "remove_on_click": true,
+          "categories_url": ""
+        },
+        "categories": old_usdb_config
+      };
     }
-    return usdb_config
-  })
+
+    // merge into new config
+    new_usdb_config.page.search_results.prepend_id_column=old_usdb_config.general.prepend_id_column;
+    new_usdb_config.page.search_results.remove_on_click=old_usdb_config.general.remove_on_click;
+    new_usdb_config.common.categories_url = old_usdb_config.general.categories_url;
+    new_usdb_config.common.categories = [...old_usdb_config.categories];
+
+    // first set new config
+    try {
+      await set_config(new_usdb_config);
+    } catch (error) {
+      console.error(`Error updating config from legacy sync storage: ${error}`);
+      throw error
+    }
+
+    console.log("successfully updated config from legacy sync storage");
+
+    // ... then delete sync_storage
+    try {
+      await browser.storage.sync.remove(OLD_CONFIG_KEY);
+    } catch (error) {
+      console.error(`Error deleting legacy sync storage: ${error}`);
+      throw error
+    }
+
+    console.log("successfully deleted config from sync storage");
+
+    new_usdb_config.legacy.syncStorageImportDone = true;
+  }
+
+  // in any case mark importing from sync storage as done
+  // (also for newer uses that have never uses sync storage versions of this addon)
+  new_usdb_config.legacy.syncStorageImportDone = true;
+  await set_config(new_usdb_config);
+
+  return new_usdb_config
+}
+
+async function get_config_or_set_default() {
+
+  const local_storage = await browser.storage.local.get();
+  // console.log(local_storage)
+
+  // default settings
+  let usdb_config;
+  if (CONFIG_KEY in local_storage) {
+    usdb_config = {...local_storage[CONFIG_KEY]};  // be sure to deep copy
+  } else {
+    usdb_config = {...get_config_default()};  // be sure to deep copy
+    await set_config(usdb_config);
+  }
+
+  if (!usdb_config.legacy.syncStorageImportDone) {
+    try {
+      usdb_config = await try_import_from_sync_storage(usdb_config);
+    } catch (error) {
+      console.error("Sync storage import failed:", error);
+    }
+  }
+
+  // No need to call set_config again - all changes where already set with await
+  return usdb_config
 }
 
 var currentlyPlaying = null;
@@ -167,7 +240,7 @@ function togglePlayPause(audioId) {
   }
 }
 
-function addColumnsFromEditPage(row, usdb_config, usdb_id) {
+async function addColumnsFromEditPage(row, usdb_id) {
   const first_column = row.firstElementChild;
   const last_column = row.lastElementChild;
   if (isHeaderRow(row)) {
@@ -211,80 +284,78 @@ function addColumnsFromEditPage(row, usdb_config, usdb_id) {
     td_players.appendChild(createSpinner());
     row.insertBefore(td_players, last_column);
 
-    fetch(`https://usdb.animux.de/?link=editsongs&id=${usdb_id}`)
-      .then(res => res.text())
-      .then(htmlString => {
-        // create a temporary container
-        const temp_element = document.createElement("div");
-        // // Parse the HTML string and append it to the container using DOMParser
-        // // should be save then using .innerHTML directly
-        // const parser = new DOMParser();
-        // const parsedDocument = parser.parseFromString(htmlString, 'text/html');
-        // temp_element.appendChild(parsedDocument.body);
-        temp_element.innerHTML = htmlString;
+    const res = await fetch(`https://usdb.animux.de/?link=editsongs&id=${usdb_id}`);
+    const htmlString = await res.text();
+    // create a temporary container
+    const temp_element = document.createElement("div");
+    // // Parse the HTML string and append it to the container using DOMParser
+    // // should be save then using .innerHTML directly
+    // const parser = new DOMParser();
+    // const parsedDocument = parser.parseFromString(htmlString, 'text/html');
+    // temp_element.appendChild(parsedDocument.body);
+    temp_element.innerHTML = htmlString;
 
-        const coverInput = temp_element.querySelector('#editCoverSampleTable input[name="coverinput"]');
-        const coverHref = coverInput.value;
-        const sampleInput = temp_element.querySelector('#editCoverSampleTable input[name="sampleinput"]');
-        const sampleHref = sampleInput.value;
-        const txtTextarea = temp_element.querySelector('table textarea[name="txt"]');
-        const txt = txtTextarea.textContent;
-        const metatags_str = txt.split("\n").filter(line => line.startsWith("#VIDEO"))[0];
+    const coverInput = temp_element.querySelector('#editCoverSampleTable input[name="coverinput"]');
+    const coverHref = coverInput.value;
+    const sampleInput = temp_element.querySelector('#editCoverSampleTable input[name="sampleinput"]');
+    const sampleHref = sampleInput.value;
+    const txtTextarea = temp_element.querySelector('table textarea[name="txt"]');
+    const txt = txtTextarea.textContent;
+    const metatags_str = txt.split("\n").filter(line => line.startsWith("#VIDEO"))[0];
 
-        const sample_col = document.querySelector(`#row_${usdb_id} .sample`);
-        if (sampleHref) {
-          const source = document.createElement("source");
-          source.src = sampleHref;
-          source.type="audio/mpeg";
-          const audio = document.createElement("audio");
-          audio.setAttribute("id", `audio_${usdb_id}`);
-          audio.appendChild(source);
-          const playButton = document.createElement("button");
-          playButton.onclick = () => togglePlayPause(`audio_${usdb_id}`);
-          playButton.textContent = "▶︎";
-          playButton.setAttribute("id", `play_audio_${usdb_id}`);
-          sample_col.replaceChild(audio, sample_col.firstElementChild);
-          sample_col.appendChild(playButton);
-        } else {
-          sample_col.removeChild(sample_col.firstElementChild);
-        }
+    const sample_col = document.querySelector(`#row_${usdb_id} .sample`);
+    if (sampleHref) {
+      const source = document.createElement("source");
+      source.src = sampleHref;
+      source.type="audio/mpeg";
+      const audio = document.createElement("audio");
+      audio.setAttribute("id", `audio_${usdb_id}`);
+      audio.appendChild(source);
+      const playButton = document.createElement("button");
+      playButton.onclick = () => togglePlayPause(`audio_${usdb_id}`);
+      playButton.textContent = "▶︎";
+      playButton.setAttribute("id", `play_audio_${usdb_id}`);
+      sample_col.replaceChild(audio, sample_col.firstElementChild);
+      sample_col.appendChild(playButton);
+    } else {
+      sample_col.removeChild(sample_col.firstElementChild);
+    }
 
-        const usdb_cover_col = document.querySelector(`#row_${usdb_id} .usdb_cover`);
-        usdb_cover_col.style.height = "4em";
-        usdb_cover_col.style.width = usdb_cover_col.style.height;
-        if (coverHref) {
-          const img = document.createElement("img");
-          img.src = coverHref;
-          img.style.height = "100%";
-          img.style.aspectRatio = "1 / 1";
-          usdb_cover_col.replaceChild(img, usdb_cover_col.firstElementChild);
-        } else {
-          usdb_cover_col.removeChild(usdb_cover_col.firstElementChild);
-        }
+    const usdb_cover_col = document.querySelector(`#row_${usdb_id} .usdb_cover`);
+    usdb_cover_col.style.height = "4em";
+    usdb_cover_col.style.width = usdb_cover_col.style.height;
+    if (coverHref) {
+      const img = document.createElement("img");
+      img.src = coverHref;
+      img.style.height = "100%";
+      img.style.aspectRatio = "1 / 1";
+      usdb_cover_col.replaceChild(img, usdb_cover_col.firstElementChild);
+    } else {
+      usdb_cover_col.removeChild(usdb_cover_col.firstElementChild);
+    }
 
-        metatags = metatags_str.replace(/^#VIDEO:/,"").split(",").reduce((prev,curr) => {
-          i = curr.search("=");
-          value = curr.split("=");
-          key = value[0];
-          value = value.slice(1).join("=");
-          return {...prev, [key]: value}
-        }, {});
- 
-        for (col of ["v","a","co","bg"]) {
-          const col_i = document.querySelector(`#row_${usdb_id} .${col}`);
-          col_i.removeChild(col_i.firstElementChild);
-          if (col in metatags) {
-            col_i.textContent=col;
-            col_i.title=metatags[col];
-          }
-        }
-        
-        const col_players = document.querySelector(`#row_${usdb_id} .players`);
-        col_players.removeChild(col_players.firstElementChild);
-        if ("p1" in metatags && "p2" in metatags) {
-          col_players.textContent=`${metatags["p1"]} / ${metatags["p2"]}`;
-        }
-      });
+    metatags = metatags_str.replace(/^#VIDEO:/,"").split(",").reduce((prev,curr) => {
+      i = curr.search("=");
+      value = curr.split("=");
+      key = value[0];
+      value = value.slice(1).join("=");
+      return {...prev, [key]: value}
+    }, {});
+
+    for (col of ["v","a","co","bg"]) {
+      const col_i = document.querySelector(`#row_${usdb_id} .${col}`);
+      col_i.removeChild(col_i.firstElementChild);
+      if (col in metatags) {
+        col_i.textContent=col;
+        col_i.title=metatags[col];
+      }
+    }
+    
+    const col_players = document.querySelector(`#row_${usdb_id} .players`);
+    col_players.removeChild(col_players.firstElementChild);
+    if ("p1" in metatags && "p2" in metatags) {
+      col_players.textContent=`${metatags["p1"]} / ${metatags["p2"]}`;
+    }
   }
 }
 
@@ -300,11 +371,12 @@ function removeOnClick(row) {
 /**
  * apply row background color based on configuration and usdb_id
  * @param {*} row 
+ * @param {*} commonConfig
  * @param {*} usdb_id 
  */
-function highlight_row(row, usdb_config, usdb_id) {
+function highlight_row(row, commonConfig, usdb_id) {
   if (!isHeaderRow(row)) {
-    for (let conf of usdb_config.categories) {
+    for (let conf of commonConfig.categories) {
       if (conf.ids.includes(usdb_id)) {
         row.style["background-color"] = `${conf.color}`;
         break
@@ -313,21 +385,29 @@ function highlight_row(row, usdb_config, usdb_id) {
   }
 }
 
-get_config_or_set_default().then( usdb_config => {
-    const result_table = document.getElementById("tablebg").getElementsByTagName("table")[0];
-    const result_rows = result_table.getElementsByTagName("tr");
-            
-    for ( let i=0; i<result_rows.length; i++ ) {
-      const usdb_id = get_row_usdb_id(result_rows[i]);
-      setRowId(result_rows[i], usdb_id);
-      if (usdb_config.general.prepend_id_column) {
-        prependIdColumn(result_rows[i], usdb_id);
-      }
-      addColumnsFromEditPage(result_rows[i], usdb_config, usdb_id);
-      if (usdb_config.general.remove_on_click) {
-        removeOnClick(result_rows[i]);
-      }
-      highlight_row(result_rows[i], usdb_config, usdb_id);
+(async () => {
+  // required work-around instead of top-level async/await until type="module" is supported in manifest.json
+
+  // on every page load
+  // ... first get config
+  const usdb_config = await get_config_or_set_default();
+  const pageConfig = usdb_config.page.search_results;
+  const commonConfig = usdb_config.common;
+
+  // ... then execute
+  const result_table = document.getElementById("tablebg").getElementsByTagName("table")[0];
+  const result_rows = result_table.getElementsByTagName("tr");
+          
+  for ( let i=0; i<result_rows.length; i++ ) {
+    const usdb_id = get_row_usdb_id(result_rows[i]);
+    setRowId(result_rows[i], usdb_id);
+    if (pageConfig.prepend_id_column) {
+      prependIdColumn(result_rows[i], usdb_id);
     }
+    await addColumnsFromEditPage(result_rows[i], usdb_id);
+    if (pageConfig.remove_on_click) {
+      removeOnClick(result_rows[i]);
+    }
+    highlight_row(result_rows[i], commonConfig, usdb_id);
   }
-);
+})();

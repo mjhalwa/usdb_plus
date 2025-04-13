@@ -18,6 +18,7 @@ export default [
     output: {
       file: 'scripts/highlight_detail_page.bundle.js',
       // format: 'iife',  // Removes "use strict";
+      // format: 'es', // tells Rollup to generate native ES modules (supporting async/await at top level)
     }
   },
   {
@@ -25,6 +26,7 @@ export default [
     output: {
       file: 'scripts/highlight_search_results.bundle.js',
       // format: 'iife',  // Removes "use strict";
+      // format: 'es', // tells Rollup to generate native ES modules (supporting async/await at top level)
     }
   },
   {
@@ -32,6 +34,7 @@ export default [
     output: {
       file: 'options/options.bundle.js', // Output in the same directory as options.html
       // format: 'iife',  // Removes "use strict";
+      // format: 'es', // tells Rollup to generate native ES modules (supporting async/await at top level)
     }
   }
 ];

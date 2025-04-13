@@ -13,16 +13,6 @@
       <section id="general-section">
         <h1>General Settings</h1>
 
-        <label>
-          <input type="checkbox" id="cb-prepend-id-column" />
-          add ID column to Search results
-        </label>
-
-        <label>
-          <input type="checkbox" id="cb-remove-onclick" />
-          remove onClick in Search results
-        </label>
-
         <label id="categories-url-label">
           Categories from URL
           <input type="url" id="le-categories-url"
@@ -31,6 +21,24 @@
                  title="URL to a raw JSON-file. Examples: github (https://raw.githubusercontent.com/...), dropbox (https://dl.dropbox.com/...)" />
           <button id="url-reload-btn" type="button">reload</button>
         </label>
+      </section>
+
+      <section id="pages-settings-section">
+        <h1>Page Specific Settings</h1>
+
+        <section id="search_results_page-section">
+          <h2>Search Results</h2>
+    
+          <label>
+            <input type="checkbox" id="cb-search_results-prepend-id-column" />
+            add ID column to Search results
+          </label>
+
+          <label>
+            <input type="checkbox" id="cb-search_results-remove-onclick" />
+            remove onClick in Search results
+          </label>
+        </section>
       </section>
 
       <section id="categories-section">
@@ -100,6 +108,8 @@
       </section>
     </template>  
 
+    <!-- should enable top-level async/await setting type="module", BUT: does not load the script in firefox -->
+    <!-- <script type="module" src="options.bundle.js"></script> -->
     <script src="options.bundle.js"></script>
   </body>
 </html>

@@ -16,6 +16,12 @@
     "storage"
   ],
 
+  // // when transitioning to manifest V3
+  // // matching URLs from content_scripts or fetch calls should be declared under host_permissions:
+  // "host_permissions": [
+  //   "https://usdb.animux.de/*"
+  // ],
+  
   "browser_specific_settings": {
     "gecko": {
       // https://extensionworkshop.com/documentation/develop/extensions-and-the-add-on-id/#when-do-you-need-an-add-on-id
@@ -32,10 +38,12 @@
     {
       "matches": ["https://usdb.animux.de/*?link=list*"],
       "js": ["scripts/highlight_search_results.bundle.js"]
+      // "type": "module" // would allow top level async/await, but not yet supported in Firefox (not even in manifest v3 on 2025_04_13 with 137.0.1)
     },
     {
       "matches": ["https://usdb.animux.de/*?link=detail*"],
       "js": ["scripts/highlight_detail_page.bundle.js"]
+      // "type": "module" // would allow top level async/await, but not yet supported in Firefox (not even in manifest v3 on 2025_04_13 with 137.0.1)
     }
   ]
 }

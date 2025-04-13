@@ -18,7 +18,7 @@ function showSuccess() {
 }
 
 
-function showError(message) {
+async function showError(message) {
   // show success and hide it after 3 sec
   const errorMessage = document.querySelector("#error-msg")
   errorMessage.style.display = "block";
@@ -36,56 +36,60 @@ function showError(message) {
   }, 10000);
 }
 
-function saveOptions(e) {
-  e.preventDefault();
+async function saveOptions(event) {
+  event.preventDefault();
   // console.log("save pressed")
 
   const new_usdb_config = {
-    "general": {
-      "prepend_id_column": document.querySelector("#cb-prepend-id-column").checked,
-      "remove_on_click": document.querySelector("#cb-remove-onclick").checked,
-      "categories_url": document.querySelector("#le-categories-url").value
+    "page": {
+      "search_results": {
+        "prepend_id_column": document.querySelector("#cb-search_results-prepend-id-column").checked,
+        "remove_on_click": document.querySelector("#cb-search_results-remove-onclick").checked,
+      }
     },
-    /* https://stackoverflow.com/a/53350150
-      * > If you're using ES6, you can use [...selectors] syntax, like this:
-      */
-    "categories": [
-        ...document.querySelector("#categories-section").querySelectorAll("section")
-      ].map( (obj, index) => {
-        label = document.querySelector(`#label-${index}`).textContent
-        color = document.querySelector(`#color-${index}`).value
-        ids = document.querySelector(`#ids-${index}`).value
-              .replace(/\s/g,",")
-              .replace(/,+/g,",")
-              .split(",")
-              .filter(val => val !== "")
-              .map(val => Number(val))
-        return {
-          "label": label,
-          "color": color,
-          "ids": [...new Set(ids)] //!< unique ids
-                .sort((a,b) => { if (a<b) {return -1}; return 1})
-        }
-    })
+    "common": {
+      "categories_url": document.querySelector("#le-categories-url").value,
+      /* https://stackoverflow.com/a/53350150
+        * > If you're using ES6, you can use [...selectors] syntax, like this:
+        */
+      "categories": [
+          ...document.querySelector("#categories-section").querySelectorAll("section")
+        ].map( (obj, index) => {
+          const label = document.querySelector(`#label-${index}`).textContent
+          const color = document.querySelector(`#color-${index}`).value
+          const ids = document.querySelector(`#ids-${index}`).value
+                      .replace(/\s/g,",")
+                      .replace(/,+/g,",")
+                      .split(",")
+                      .filter(val => val !== "")
+                      .map(val => Number(val))
+          return {
+            "label": label,
+            "color": color,
+            "ids": [...new Set(ids)] //!< unique ids
+                  .sort((a,b) => { if (a<b) {return -1}; return 1})
+          }
+      })
+    },
   }
   // console.log(new_usdb_config)
 
-  set_config(
-    new_usdb_config,
-    () => {
-      restoreOptions()
-      showSuccess()
-    },
-    (error) => {
-      if (error.message.startsWith("QuotaExceededError")) {
-        showError("saving changes failed, not enough space available")
-        console.error(error)
-      } else {
-        showError(`saving changes failed due to ${error.message}`)
-        console.error(error)
-      }
+  try {
+    const last_usdb_config = await get_config_or_set_default()
+    await set_config({...last_usdb_config, ...new_usdb_config}) // last_config in order to keep all unmentioned configs (e.g. legacy)
+  } catch (error) {
+    if (error.message.startsWith("QuotaExceededError")) {
+      showError("saving changes failed, not enough space available")
+      console.error(error)
+    } else {
+      showError(`saving changes failed due to ${error.message}`)
+      console.error(error)
     }
-  )
+    return
+  }
+
+  await restoreOptions()
+  showSuccess()
 }
 
 function getCategorySectionTemplate() {
@@ -125,84 +129,83 @@ function writeCategories(categories) {
   }
 }
 
-function restoreOptions() {
+async function restoreOptions() {
   // console.log("restoreOptions")
 
-  function onError(error) {
+  let usdb_config
+  try {
+    usdb_config = await get_config_or_set_default()
+  } catch (error) {
     showError(error);
+    return
   }
-  get_config_or_set_default().then( usdb_config => {
-      console.log(usdb_config)
-      document.querySelector("#cb-prepend-id-column").checked = usdb_config.general.prepend_id_column
-      document.querySelector("#cb-remove-onclick").checked = usdb_config.general.remove_on_click
-      document.querySelector("#le-categories-url").value = usdb_config.general.categories_url
-      writeCategories(usdb_config.categories)
-    },
-    onError
-  )
+
+  document.querySelector("#cb-search_results-prepend-id-column").checked = usdb_config.page.search_results.prepend_id_column
+  document.querySelector("#cb-search_results-remove-onclick").checked = usdb_config.page.search_results.remove_on_click
+  document.querySelector("#le-categories-url").value = usdb_config.common.categories_url
+  writeCategories(usdb_config.common.categories)
 }
 
-function reloadCategoriesFromUrl() {
+async function reloadCategoriesFromUrl() {
   // console.log("reloadCategoriesFromUrl")
   const url = document.querySelector("#le-categories-url").value
   if (url.length) {
-    fetch(url).then((res) => {
-      res.text().then((content) => {
-          try {
-            const json_content = JSON.parse(content)
-            // console.log(json_content)
-            if (!Array.isArray(json_content)) {
-              showError("expected array in JSON")
-              return
-            }
-            if (json_content.length === 0) {
-              showError("expected array length >= 0")
-              return
-            }
-            for (let index in json_content) {
-              for ( property of ["label", "color", "ids"]) {
-                if (!json_content[index].hasOwnProperty(property)) {
-                  showError(`missing property '${property}' in Element ${index}`)
-                  return
-                }
-              }
-              if (!(typeof json_content[index]["label"] === "string") ) {
-                showError("invalid format of property 'label', has to be a string")
-                return
-              }
-              if (!json_content[index]["label"].match(/^[\w _-]+$/)) {
-                showError("invalid format of property 'label', allows are only (non-empty) word characters, space, underscore and dash")
-                return
-              }
-              if (!(typeof json_content[index]["color"] === "string") ) {
-                showError("invalid format of property 'color', has to be a string")
-                return
-              }
-              if (!json_content[index]["color"].match(/^#[a-fA-F0-9]{6}$/)) {
-                showError("invalid format of property 'color', must be '#' followed by 3 hex values")
-                return
-              }
-              if (!Array.isArray(json_content[index]["ids"])) {
-                showError("invalid format of property 'ids', has to be an array")
-                return
-              }
-              if (!json_content[index]["ids"].every(x => x>0)) {
-                showError("invalid format of property 'ids', every array element has to be a positive integer")
-                return
-              }
-            }
-            writeCategories(json_content)
-          } catch (e) {
-            showError("invalid JSON!")
-            console.log(e)
+    const res = await fetch(url)
+    const content = await res.text()
+    try {
+      const json_content = JSON.parse(content)
+      // console.log(json_content)
+      if (!Array.isArray(json_content)) {
+        showError("expected array in JSON")
+        return
+      }
+      if (json_content.length === 0) {
+        showError("expected array length >= 0")
+        return
+      }
+      for (let index in json_content) {
+        for ( property of ["label", "color", "ids"]) {
+          if (!json_content[index].hasOwnProperty(property)) {
+            showError(`missing property '${property}' in Element ${index}`)
             return
           }
-      })
-    })
+        }
+        if (!(typeof json_content[index]["label"] === "string") ) {
+          showError("invalid format of property 'label', has to be a string")
+          return
+        }
+        if (!json_content[index]["label"].match(/^[\w _-]+$/)) {
+          showError("invalid format of property 'label', allows are only (non-empty) word characters, space, underscore and dash")
+          return
+        }
+        if (!(typeof json_content[index]["color"] === "string") ) {
+          showError("invalid format of property 'color', has to be a string")
+          return
+        }
+        if (!json_content[index]["color"].match(/^#[a-fA-F0-9]{6}$/)) {
+          showError("invalid format of property 'color', must be '#' followed by 3 hex values")
+          return
+        }
+        if (!Array.isArray(json_content[index]["ids"])) {
+          showError("invalid format of property 'ids', has to be an array")
+          return
+        }
+        if (!json_content[index]["ids"].every(x => x>0)) {
+          showError("invalid format of property 'ids', every array element has to be a positive integer")
+          return
+        }
+      }
+      writeCategories(json_content)
+    } catch (error) {
+      showError("invalid JSON!")
+      console.error(error)
+      return
+    }
   }
 }
 
-
-document.addEventListener("DOMContentLoaded", restoreOptions);
+document.addEventListener("DOMContentLoaded", async () => {
+  await restoreOptions();
+});
 document.querySelector("form").addEventListener("submit", saveOptions);
 document.querySelector("#url-reload-btn").addEventListener("click", reloadCategoriesFromUrl);
