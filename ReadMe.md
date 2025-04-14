@@ -28,27 +28,44 @@ using `nodejs == v18.20.7`
 npm install --dev
 ```
 
-Debug in the browser:
+Build
+
+``` powershell
+pwsh build.ps1
+```
+
+Debug in Firefox:
 
 1. Open Firefox
 2. Goto `about:debugging`
 3. Click __This Firefox__ in left sidenav
 4. Click __Load Temporary Add-on__ on the top right
-5. Select `manifest.json`
+5. Select `./build/firefox/manifest.json`
+6. Goto [usdb.animux.de](usdb.animux.de) and try out
+
+Debug in Chrome:
+
+1. Open Google Chrome
+2. Goto `chrome://extensions/`
+3. enable "Developermode" in top right
+4. select "load unpacked Extension"
+5. goto `./build/chrome` directory and hit "open"
 6. Goto [usdb.animux.de](usdb.animux.de) and try out
 
 Apply changes:
 
 1. change js code in `src` directory
-2. build `.bundle.js` files by replacing imports with function bodies
+2. re-build `.bundle.js` files by replacing imports with function bodies and recreate the build directories for firefox and chrome
 
     ``` powershell
-    npm run build
+    pwsh build.ps1
     ```
 
 3. click __Reload__ button in `about:debugging`
 
 ## Links
+
+### Firefox
 
 - [MDN - Browser Extension Docs](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions)
 - [Firefox Source Docs - about:debugging](https://firefox-source-docs.mozilla.org/devtools-user/about_colon_debugging/index.html)
@@ -77,3 +94,13 @@ Examples
 - [MDN - Your first Extension](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Your_first_WebExtension)
 - [MDN - Your second Extension](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Your_second_WebExtension)
 - [MDN - Implement a settings page](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Implement_a_settings_page)
+
+### Chrome
+
+- [Chrome - Getting Started with Extensions](https://developer.chrome.com/docs/extensions/get-started?hl=de)
+- [Chrome - Publish in Chrome Web Store](https://developer.chrome.com/docs/webstore/publish?hl=de)
+
+Examples
+
+- [Chrome - The hello world Extension](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world?hl=de)
+- [Chrome - Execute scripts on each page Extension](https://developer.chrome.com/docs/extensions/get-started/tutorial/scripts-on-every-tab?hl=de)
