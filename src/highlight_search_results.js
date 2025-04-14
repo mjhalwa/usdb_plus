@@ -1,17 +1,28 @@
-import { get_config_or_set_default } from "./util.js"
-
-var currentlyPlaying = null;
+import { get_config_or_set_default, get_song_details, createSpinner } from "./util.js"
 
 function isHeaderRow(row) {
   return (row.className === "list_head")
 }
 
+function getColumnHeaderIds(result_rows) {
+  const header_row = Array.from(result_rows).filter(row => isHeaderRow(row))[0]
+  return Array.from(header_row.children).map(col => col.firstElementChild?.id)
+}
+
+/**
+ * find usdb id from non-header column
+ * @param {*} row 
+ * @returns 
+ */
 function get_row_usdb_id(row) {
-  let usdb_id = -1
-  if (!isHeaderRow(row)) {
-    const attr_onclick = row.firstElementChild.attributes["onclick"]
-    usdb_id = Number(attr_onclick.textContent.replace(/^[^0-9]*([0-9]+)[^0-9]*$/, "$1"))
+  if (isHeaderRow(row)) {
+    throw "cannot find id in header row"
   }
+  const attr_onclick_text = Array
+    .from(row.children)
+    .map(col => col.attributes["onclick"]?.textContent)
+    .filter(t => t !== undefined && t.match(/^show_detail\(\d+\)/))[0]
+  usdb_id = Number(attr_onclick_text.replace(/^[^0-9]*([0-9]+)[^0-9]*$/, "$1"))
   return usdb_id
 }
 
@@ -21,13 +32,13 @@ function setRowId(row, usdb_id) {
   }
 }
 
-function prependIdColumn(row, usdb_id) {
-  const first_original_column = row.firstElementChild
+function prependIdColumn(row, usdb_id, column_header_ids) {
+  const interpret_column = row.children[column_header_ids.indexOf("list_artist")]
   if (isHeaderRow(row)) {
     const th_usdb_id = document.createElement("td");  //!< Note: usdb uses <td> for heads
-    th_usdb_id.baseURI = first_original_column.baseURI
+    th_usdb_id.baseURI = interpret_column.baseURI
     const order_link = document.createElement("a");
-    order_link.href = first_original_column.firstElementChild.href.replace("&order=interpret","&order=id")
+    order_link.href = interpret_column.firstElementChild.href.replace("&order=interpret","&order=id")
     if (window.location.href.includes("&order=id")) {
       order_link.href += (window.location.href.includes("&ud=asc")) ? "&ud=desc" : "&ud=asc"
     } else {
@@ -51,89 +62,20 @@ function prependIdColumn(row, usdb_id) {
         th_usdb_id.appendChild(order_img)
       }
     }
-    row.insertBefore(th_usdb_id, first_original_column)
+    row.insertBefore(th_usdb_id, interpret_column)
 
   } else {
     // insert column with usdb ID
     const td_usdb_id = document.createElement("td");
-    td_usdb_id.attributes = first_original_column.attributes
+    td_usdb_id.attributes = interpret_column.attributes
     td_usdb_id.textContent = usdb_id.toString()
-    row.insertBefore(td_usdb_id, first_original_column)
-  }
-}
-
-/* created by ChatGPT */
-function createSpinner() {
-  const spinnerContainer = document.createElement('div');
-  spinnerContainer.classList.add('spinner-container');
-  spinnerContainer.style.display = 'flex';
-  spinnerContainer.style.justifyContent = 'center';
-  spinnerContainer.style.alignItems = 'center';
-
-  const spinner = document.createElement('div');
-  spinner.classList.add('spinner');
-  spinner.style.border = '0.2em solid rgba(0, 0, 0, 0.1)';
-  spinner.style.borderTop = '0.2em solid #3498db';
-  spinner.style.borderRadius = '50%';
-  spinner.style.width = '1em';
-  spinner.style.height = '1em';
-  spinner.style.animation = 'spin 1s linear infinite';
-
-  let keyframesStyle = document.getElementById('spinner-keyframes');
-
-  if (!keyframesStyle) {
-    keyframesStyle = document.createElement('style');
-    keyframesStyle.id = 'spinner-keyframes';
-    keyframesStyle.textContent = `
-      @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
-    `;
-
-    document.head.appendChild(keyframesStyle);
-  }
-
-  spinnerContainer.appendChild(spinner);
-  return spinnerContainer;
-}
-
-function updateButtonText(audio, isPlaying) {
-  const playButton = document.querySelector(`#play_${audio.id}`);
-  playButton.textContent = isPlaying ? '❚❚' : '▶︎';
-}
-
-function togglePlayPause(audioId) {
-  const audio = document.querySelector(`#${audioId}`);
-
-  if (currentlyPlaying && currentlyPlaying !== audio) {
-      currentlyPlaying.pause();
-      updateButtonText(currentlyPlaying, false);
-  }
-
-  if (audio.paused) {
-      audio.play();
-      currentlyPlaying = audio;
-      updateButtonText(audio, true);
-  } else {
-      audio.pause();
-      currentlyPlaying = null;
-      updateButtonText(audio, false);
+    row.insertBefore(td_usdb_id, interpret_column)
   }
 }
 
 async function addColumnsFromEditPage(row, usdb_id) {
-  const first_column = row.firstElementChild
   const last_column = row.lastElementChild
   if (isHeaderRow(row)) {
-    const th_sample = document.createElement("td");  //!< Note: usdb uses <td> for heads
-    th_sample.textContent = "▶︎/❚❚"
-    row.insertBefore(th_sample, first_column)
-
-    const th_usdb_cover = document.createElement("td");  //!< Note: usdb uses <td> for heads
-    th_usdb_cover.textContent = "Cover"
-    row.insertBefore(th_usdb_cover, first_column)
-
     for (col of ["v","a","co","bg"]) {
       const th_i = document.createElement("td");  //!< Note: usdb uses <td> for heads
       th_i.textContent = col
@@ -144,16 +86,6 @@ async function addColumnsFromEditPage(row, usdb_id) {
     th_players.textContent = "p1/p2"
     row.insertBefore(th_players, last_column)
   } else {
-    const td_sample = document.createElement("td");
-    td_sample.classList.add("sample")
-    td_sample.appendChild(createSpinner())
-    row.insertBefore(td_sample, first_column)
-
-    const td_usdb_cover = document.createElement("td");
-    td_usdb_cover.classList.add("usdb_cover")
-    td_usdb_cover.appendChild(createSpinner())
-    row.insertBefore(td_usdb_cover, first_column)
-
     for (col of ["v","a","co","bg"]) {
       const td_i = document.createElement("td");  //!< Note: usdb uses <td> for heads
       td_i.classList.add(col)
@@ -166,57 +98,9 @@ async function addColumnsFromEditPage(row, usdb_id) {
     td_players.appendChild(createSpinner())
     row.insertBefore(td_players, last_column)
 
-    const res = await fetch(`https://usdb.animux.de/?link=editsongs&id=${usdb_id}`)
-    const htmlString = await res.text()
-    // create a temporary container
-    const temp_element = document.createElement("div")
-    // // Parse the HTML string and append it to the container using DOMParser
-    // // should be save then using .innerHTML directly
-    // const parser = new DOMParser();
-    // const parsedDocument = parser.parseFromString(htmlString, 'text/html');
-    // temp_element.appendChild(parsedDocument.body);
-    temp_element.innerHTML = htmlString;
+    const song_details = await get_song_details(usdb_id)
 
-    const coverInput = temp_element.querySelector('#editCoverSampleTable input[name="coverinput"]')
-    const coverHref = coverInput.value
-    const sampleInput = temp_element.querySelector('#editCoverSampleTable input[name="sampleinput"]')
-    const sampleHref = sampleInput.value
-    const txtTextarea = temp_element.querySelector('table textarea[name="txt"]')
-    const txt = txtTextarea.textContent
-    const metatags_str = txt.split("\n").filter(line => line.startsWith("#VIDEO"))[0]
-
-    const sample_col = document.querySelector(`#row_${usdb_id} .sample`)
-    if (sampleHref) {
-      const source = document.createElement("source")
-      source.src = sampleHref
-      source.type="audio/mpeg"
-      const audio = document.createElement("audio")
-      audio.setAttribute("id", `audio_${usdb_id}`)
-      audio.appendChild(source)
-      const playButton = document.createElement("button")
-      playButton.onclick = () => togglePlayPause(`audio_${usdb_id}`)
-      playButton.textContent = "▶︎"
-      playButton.setAttribute("id", `play_audio_${usdb_id}`)
-      sample_col.replaceChild(audio, sample_col.firstElementChild)
-      sample_col.appendChild(playButton)
-    } else {
-      sample_col.removeChild(sample_col.firstElementChild)
-    }
-
-    const usdb_cover_col = document.querySelector(`#row_${usdb_id} .usdb_cover`)
-    usdb_cover_col.style.height = "4em"
-    usdb_cover_col.style.width = usdb_cover_col.style.height
-    if (coverHref) {
-      const img = document.createElement("img")
-      img.src = coverHref
-      img.style.height = "100%"
-      img.style.aspectRatio = "1 / 1"
-      usdb_cover_col.replaceChild(img, usdb_cover_col.firstElementChild)
-    } else {
-      usdb_cover_col.removeChild(usdb_cover_col.firstElementChild)
-    }
-
-    metatags = metatags_str.replace(/^#VIDEO:/,"").split(",").reduce((prev,curr) => {
+    metatags = song_details.metatags_str.replace(/^#VIDEO:/,"").split(",").reduce((prev,curr) => {
       i = curr.search("=")
       value = curr.split("=")
       key = value[0]
@@ -279,14 +163,15 @@ function highlight_row(row, commonConfig, usdb_id) {
   // ... then execute
   const result_table = document.getElementById("tablebg").getElementsByTagName("table")[0]
   const result_rows = result_table.getElementsByTagName("tr")
-          
+
+  const column_header_ids = getColumnHeaderIds(result_rows)
   for ( let i=0; i<result_rows.length; i++ ) {
-    const usdb_id = get_row_usdb_id(result_rows[i])
+    const usdb_id = (!isHeaderRow(result_rows[i])) ? get_row_usdb_id(result_rows[i]) : null
     setRowId(result_rows[i], usdb_id)
     if (pageConfig.prepend_id_column) {
-      prependIdColumn(result_rows[i], usdb_id)
+      prependIdColumn(result_rows[i], usdb_id, column_header_ids)
     }
-    await addColumnsFromEditPage(result_rows[i], usdb_id)
+    await addColumnsFromEditPage(result_rows[i], usdb_id, column_header_ids)
     if (pageConfig.remove_on_click) {
       removeOnClick(result_rows[i])
     }

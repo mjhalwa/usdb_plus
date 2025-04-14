@@ -36,8 +36,8 @@ async function try_import_from_sync_storage(usdb_config) {
   const new_usdb_config = {...usdb_config}  // be sure to deep copy
   const OLD_CONFIG_KEY = "config"
   const sync_storage = await browser.storage.sync.get()
-  console.log("sync_storage")
-  console.log(sync_storage)
+  // console.log("sync_storage")
+  // console.log(sync_storage)
 
   if (OLD_CONFIG_KEY in sync_storage) {
     // retrieve settings from sync storage
@@ -117,4 +117,154 @@ export async function get_config_or_set_default() {
 
   // No need to call set_config again - all changes where already set with await
   return usdb_config
+}
+
+export async function get_song_details(usdb_id) {
+  const res = await fetch(`https://usdb.animux.de/?link=editsongs&id=${usdb_id}`)
+  const htmlString = await res.text()
+  // create a temporary container
+  const temp_element = document.createElement("div")
+  // // Parse the HTML string and append it to the container using DOMParser
+  // // should be save then using .innerHTML directly
+  // const parser = new DOMParser();
+  // const parsedDocument = parser.parseFromString(htmlString, 'text/html');
+  // temp_element.appendChild(parsedDocument.body);
+  temp_element.innerHTML = htmlString;
+
+  const coverInput = temp_element.querySelector('#editCoverSampleTable input[name="coverinput"]')
+  const coverHref = coverInput.value
+  const sampleInput = temp_element.querySelector('#editCoverSampleTable input[name="sampleinput"]')
+  const sampleHref = sampleInput.value
+  const txtTextarea = temp_element.querySelector('table textarea[name="txt"]')
+  const txt = txtTextarea.textContent
+  const metatags_str = txt.split("\n").filter(line => line.startsWith("#VIDEO"))[0]
+
+  return {
+    "coverHref": coverHref,
+    "sampleHref": sampleHref,
+    "metatags_str": metatags_str,
+  }
+}
+
+/* created by ChatGPT */
+export function createSpinner() {
+  const spinnerContainer = document.createElement('div');
+  spinnerContainer.classList.add('spinner-container');
+  spinnerContainer.style.display = 'flex';
+  spinnerContainer.style.justifyContent = 'center';
+  spinnerContainer.style.alignItems = 'center';
+
+  const spinner = document.createElement('div');
+  spinner.classList.add('spinner');
+  spinner.style.border = '0.2em solid rgba(0, 0, 0, 0.1)';
+  spinner.style.borderTop = '0.2em solid #3498db';
+  spinner.style.borderRadius = '50%';
+  spinner.style.width = '1em';
+  spinner.style.height = '1em';
+  spinner.style.animation = 'spin 1s linear infinite';
+
+  let keyframesStyle = document.getElementById('spinner-keyframes');
+
+  if (!keyframesStyle) {
+    keyframesStyle = document.createElement('style');
+    keyframesStyle.id = 'spinner-keyframes';
+    keyframesStyle.textContent = `
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    `;
+
+    document.head.appendChild(keyframesStyle);
+  }
+
+  spinnerContainer.appendChild(spinner);
+  return spinnerContainer;
+}
+
+export function get_sample_column(row) {
+  let sample_elem = null
+  if (isHeaderRow(row)) {
+    sample_elem = document.createElement("td");  //!< Note: usdb uses <td> for heads
+    sample_elem.textContent = "▶︎/❚❚"
+  } else {
+    sample_elem = document.createElement("td");
+    sample_elem.classList.add("sample")
+    sample_elem.appendChild(createSpinner())
+  }
+  return sample_elem
+}
+
+export function get_cover_column(row) {
+  let cover_elem = null
+  if (isHeaderRow(row)) {
+    cover_elem = document.createElement("td");  //!< Note: usdb uses <td> for heads
+    cover_elem.textContent = "Cover"
+  } else {
+    cover_elem = document.createElement("td");
+    cover_elem.classList.add("usdb_cover")
+    cover_elem.appendChild(createSpinner())
+  }
+  return cover_elem
+}
+
+export function updateButtonText(audio, isPlaying) {
+  const playButton = document.querySelector(`#play_${audio.id}`);
+  playButton.textContent = isPlaying ? '❚❚' : '▶︎';
+}
+
+export var currentlyPlaying = null;
+
+export function togglePlayPause(audioId) {
+  const audio = document.querySelector(`#${audioId}`);
+
+  if (currentlyPlaying && currentlyPlaying !== audio) {
+      currentlyPlaying.pause();
+      updateButtonText(currentlyPlaying, false);
+  }
+
+  if (audio.paused) {
+      audio.play();
+      currentlyPlaying = audio;
+      updateButtonText(audio, true);
+  } else {
+      audio.pause();
+      currentlyPlaying = null;
+      updateButtonText(audio, false);
+  }
+}
+
+export function apply_sample_to_row(usdb_id, sampleHref) {
+  const sample_col = document.querySelector(`#row_${usdb_id} .sample`)
+  if (sampleHref) {
+    const source = document.createElement("source")
+    source.src = sampleHref
+    source.type="audio/mpeg"
+    const audio = document.createElement("audio")
+    audio.setAttribute("id", `audio_${usdb_id}`)
+    audio.appendChild(source)
+    const playButton = document.createElement("button")
+    playButton.onclick = () => togglePlayPause(`audio_${usdb_id}`)
+    playButton.textContent = "▶︎"
+    playButton.setAttribute("id", `play_audio_${usdb_id}`)
+    sample_col.replaceChild(audio, sample_col.firstElementChild)
+    sample_col.appendChild(playButton)
+  } else {
+    sample_col.removeChild(sample_col.firstElementChild)
+  }
+}
+
+export function apply_cover_to_row(usdb_id, coverHref) {
+  const usdb_cover_col = document.querySelector(`#row_${usdb_id} .usdb_cover`)
+  usdb_cover_col.style.height = "4em"
+  usdb_cover_col.style.width = usdb_cover_col.style.height
+  if (coverHref) {
+    const img = document.createElement("img")
+    img.src = coverHref
+    img.style.height = "100%"
+    img.style.aspectRatio = "1 / 1"
+    usdb_cover_col.replaceChild(img, usdb_cover_col.firstElementChild)
+  } else {
+    usdb_cover_col.removeChild(usdb_cover_col.firstElementChild)
+  }
 }

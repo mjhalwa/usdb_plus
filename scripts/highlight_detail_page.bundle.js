@@ -36,8 +36,8 @@ async function try_import_from_sync_storage(usdb_config) {
   const new_usdb_config = {...usdb_config};  // be sure to deep copy
   const OLD_CONFIG_KEY = "config";
   const sync_storage = await browser.storage.sync.get();
-  console.log("sync_storage");
-  console.log(sync_storage);
+  // console.log("sync_storage")
+  // console.log(sync_storage)
 
   if (OLD_CONFIG_KEY in sync_storage) {
     // retrieve settings from sync storage
