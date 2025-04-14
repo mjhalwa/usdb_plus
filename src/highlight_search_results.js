@@ -152,7 +152,7 @@ function highlight_row(row, commonConfig, usdb_id) {
 }
 
 (async () => {
-  // required work-around instead of top-level async/await until type="module" is supported in manifest.json
+  // required work-around instead of top-level async/await until type="module" is supported in manifest.firefox.json
 
   // on every page load
   // ... first get config

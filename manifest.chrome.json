@@ -1,0 +1,41 @@
+{
+  "manifest_version": 3,
+  "name": "USDB Plus",
+  "version": "1.2.0",
+
+  "description": "Customize UI of usdb.animux.de",
+
+  "icons": {
+    "32": "icon.svg",
+    "64": "icon.svg",
+    "128": "icon.svg"
+  },
+  
+  "permissions": [
+    // storage system requires storage permission, https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/storage
+    "storage"
+  ],
+
+  // when transitioning to manifest V3
+  // matching URLs from content_scripts or fetch calls should be declared under host_permissions:
+  "host_permissions": [
+    "https://usdb.animux.de/*"
+  ],
+  
+  "options_ui": {
+    "page": "options/options.html"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["https://usdb.animux.de/*?link=list*"],
+      "js": ["scripts/highlight_search_results.bundle.js"]
+      // "type": "module" // would allow top level async/await, but not yet supported in Firefox (not even in manifest v3 on 2025_04_13 with 137.0.1)
+    },
+    {
+      "matches": ["https://usdb.animux.de/*?link=detail*"],
+      "js": ["scripts/highlight_detail_page.bundle.js"]
+      // "type": "module" // would allow top level async/await, but not yet supported in Firefox (not even in manifest v3 on 2025_04_13 with 137.0.1)
+    }
+  ]
+}
