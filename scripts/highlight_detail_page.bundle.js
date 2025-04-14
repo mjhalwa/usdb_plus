@@ -120,7 +120,7 @@ async function get_config_or_set_default() {
 }
 
 (async () => {
-  // required work-around instead of top-level async/await until type="module" is supported in manifest.json
+  // required work-around instead of top-level async/await until type="module" is supported in manifest.firefox.json
 
   // on every page load
   // ... first get config
