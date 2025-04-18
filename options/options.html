@@ -108,8 +108,11 @@
       </section>
     </template>  
 
+    <!-- cross-browser: use browser instead of chrome, should be no change if imported to firefox -->
+    <script type="application/javascript" src="../lib/browser-polyfill.js"></script>
+
     <!-- should enable top-level async/await setting type="module", BUT: does not load the script in firefox -->
     <!-- <script type="module" src="options.bundle.js"></script> -->
-    <script src="options.bundle.js"></script>
+    <script type="application/javascript" src="options.bundle.js"></script>
   </body>
 </html>

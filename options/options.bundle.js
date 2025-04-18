@@ -19,6 +19,25 @@ function get_config_default() {
   }
 }
 
+// export async function isFirefox() {
+//   return typeof InstallTrigger !== "undefined";
+// }
+
+// export async function isFirefox() {
+//   if (browser.runtime.getBrowserInfo) {
+//     const info = await browser.runtime.getBrowserInfo();
+//     console.log(info.name.toLowerCase())
+//     return info.name.toLowerCase() === "firefox";
+//   } else {
+//     return false; // Chrome doesn’t support getBrowserInfo
+//   }
+// }
+
+function isFirefox() {
+  const ua = navigator.userAgent;
+  return ua.includes("Firefox")
+}
+
 const CONFIG_KEY = "usdb_plus";
 
 async function set_config(new_usdb_config) {
@@ -34,55 +53,57 @@ async function set_config(new_usdb_config) {
  */
 async function try_import_from_sync_storage(usdb_config) {
   const new_usdb_config = {...usdb_config};  // be sure to deep copy
-  const OLD_CONFIG_KEY = "config";
-  const sync_storage = await browser.storage.sync.get();
-  // console.log("sync_storage")
-  // console.log(sync_storage)
+  if (isFirefox()) {
+    const OLD_CONFIG_KEY = "config";
+    const sync_storage = await browser.storage.sync.get();
+    // console.log("sync_storage")
+    // console.log(sync_storage)
 
-  if (OLD_CONFIG_KEY in sync_storage) {
-    // retrieve settings from sync storage
-    let old_usdb_config = sync_storage[OLD_CONFIG_KEY];
+    if (OLD_CONFIG_KEY in sync_storage) {
+      // retrieve settings from sync storage
+      let old_usdb_config = sync_storage[OLD_CONFIG_KEY];
 
-    // transition from v0.1.0 to v1.0.0
-    if(Array.isArray(old_usdb_config)) {
-      old_usdb_config = {
-        "general": {
-          // adding default values here
-          "prepend_id_column": true,
-          "remove_on_click": true,
-          "categories_url": ""
-        },
-        "categories": old_usdb_config
-      };
+      // transition from v0.1.0 to v1.0.0
+      if(Array.isArray(old_usdb_config)) {
+        old_usdb_config = {
+          "general": {
+            // adding default values here
+            "prepend_id_column": true,
+            "remove_on_click": true,
+            "categories_url": ""
+          },
+          "categories": old_usdb_config
+        };
+      }
+
+      // merge into new config
+      new_usdb_config.page.search_results.prepend_id_column=old_usdb_config.general.prepend_id_column;
+      new_usdb_config.page.search_results.remove_on_click=old_usdb_config.general.remove_on_click;
+      new_usdb_config.common.categories_url = old_usdb_config.general.categories_url;
+      new_usdb_config.common.categories = [...old_usdb_config.categories];
+
+      // first set new config
+      try {
+        await set_config(new_usdb_config);
+      } catch (error) {
+        console.error(`Error updating config from legacy sync storage: ${error}`);
+        throw error
+      }
+
+      console.log("successfully updated config from legacy sync storage");
+
+      // ... then delete sync_storage
+      try {
+        await browser.storage.sync.remove(OLD_CONFIG_KEY);
+      } catch (error) {
+        console.error(`Error deleting legacy sync storage: ${error}`);
+        throw error
+      }
+
+      console.log("successfully deleted config from sync storage");
+
+      new_usdb_config.legacy.syncStorageImportDone = true;
     }
-
-    // merge into new config
-    new_usdb_config.page.search_results.prepend_id_column=old_usdb_config.general.prepend_id_column;
-    new_usdb_config.page.search_results.remove_on_click=old_usdb_config.general.remove_on_click;
-    new_usdb_config.common.categories_url = old_usdb_config.general.categories_url;
-    new_usdb_config.common.categories = [...old_usdb_config.categories];
-
-    // first set new config
-    try {
-      await set_config(new_usdb_config);
-    } catch (error) {
-      console.error(`Error updating config from legacy sync storage: ${error}`);
-      throw error
-    }
-
-    console.log("successfully updated config from legacy sync storage");
-
-    // ... then delete sync_storage
-    try {
-      await browser.storage.sync.remove(OLD_CONFIG_KEY);
-    } catch (error) {
-      console.error(`Error deleting legacy sync storage: ${error}`);
-      throw error
-    }
-
-    console.log("successfully deleted config from sync storage");
-
-    new_usdb_config.legacy.syncStorageImportDone = true;
   }
 
   // in any case mark importing from sync storage as done
@@ -94,6 +115,11 @@ async function try_import_from_sync_storage(usdb_config) {
 }
 
 async function get_config_or_set_default() {
+  // if (isFirefox()) {
+  //   console.log("is Mozilla Firefox")
+  // } else {
+  //   console.log("should be Google Chrome")
+  // }
 
   const local_storage = await browser.storage.local.get();
   // console.log(local_storage)

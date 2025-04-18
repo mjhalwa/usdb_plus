@@ -13,6 +13,8 @@ if ($?) {
     Copy-Item -Force -Recurse $_ ./build/chrome  
   }
 
+  Copy-Item -Force -Recurse "./lib" ./build/chrome  
+
   Copy-Item -Force -Recurse ./manifest.firefox.json ./build/firefox/manifest.json
   Copy-Item -Force -Recurse ./manifest.chrome.json ./build/chrome/manifest.json
 }

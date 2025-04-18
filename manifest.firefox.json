@@ -38,12 +38,16 @@
   "content_scripts": [
     {
       "matches": ["https://usdb.animux.de/*?link=list*"],
-      "js": ["scripts/highlight_search_results.bundle.js"]
+      "js": [
+        "scripts/highlight_search_results.bundle.js"
+      ]
       // "type": "module" // would allow top level async/await, but not yet supported in Firefox (not even in manifest v3 on 2025_04_13 with 137.0.1)
     },
     {
       "matches": ["https://usdb.animux.de/*?link=detail*"],
-      "js": ["scripts/highlight_detail_page.bundle.js"]
+      "js": [
+        "scripts/highlight_detail_page.bundle.js"
+      ]
       // "type": "module" // would allow top level async/await, but not yet supported in Firefox (not even in manifest v3 on 2025_04_13 with 137.0.1)
     }
   ]
