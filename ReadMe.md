@@ -63,44 +63,6 @@ Apply changes:
 
 3. click __Reload__ button in `about:debugging`
 
-## Links
+## Dependencies
 
-### Firefox
-
-- [MDN - Browser Extension Docs](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions)
-- [Firefox Source Docs - about:debugging](https://firefox-source-docs.mozilla.org/devtools-user/about_colon_debugging/index.html)
-- [MDN - storage](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/storage)
-- [MDN - manifest.json](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json)
-  
-  > It is a JSON-formatted file, with one exception: __it is allowed to contain "//"-style comments.__
-
-- [MDN - icons](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/icons)
-
-  > You can use SVG and the browser will scale your icon appropriately. There are currently two caveats though:
-  > 1. You need to specify a viewBox in the image. E.g.: `viewBox="0 0 48 48"` [for size `"48"`]
-  > 2. Even though you can use one file, you still need to specify various size of the icon in your manifest.
-
-- [MDN - Debugging - Developer tools toolbox](https://extensionworkshop.com/documentation/develop/debugging/#developer-tools-toolbox)
-- [MDN - Options page](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/user_interface/Options_pages)
-
-  Note: `console.log()` output on Add-on Preferences pages are __NOT visible__ in the usual debugging console. They __ONLY appear__ in the __developer toolbox console__
-
-- [MDN - Submitting an add-on](https://extensionworkshop.com/documentation/publish/submitting-an-add-on/)
-
-- [Extension Workshop - Developing extensions for Firefox for Android](https://extensionworkshop.com/documentation/develop/developing-extensions-for-firefox-for-android/)
-
-Examples
-
-- [MDN - Your first Extension](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Your_first_WebExtension)
-- [MDN - Your second Extension](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Your_second_WebExtension)
-- [MDN - Implement a settings page](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Implement_a_settings_page)
-
-### Chrome
-
-- [Chrome - Getting Started with Extensions](https://developer.chrome.com/docs/extensions/get-started?hl=de)
-- [Chrome - Publish in Chrome Web Store](https://developer.chrome.com/docs/webstore/publish?hl=de)
-
-Examples
-
-- [Chrome - The hello world Extension](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world?hl=de)
-- [Chrome - Execute scripts on each page Extension](https://developer.chrome.com/docs/extensions/get-started/tutorial/scripts-on-every-tab?hl=de)
+- [MDN webextension-polyfill](https://github.com/mozilla/webextension-polyfill/) for cross-browser compatibility from Firefox to Chrome, [v0.12.0](https://unpkg.com/webextension-polyfill@0.12.0/dist/browser-polyfill.js)
