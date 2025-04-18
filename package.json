@@ -1,6 +1,6 @@
 {
   "name": "usdb_plus",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "![Firefox Extension Badge](https://img.shields.io/badge/Mozilla_Firefox-Mozilla_Firefox_Webbrowser?logo=firefoxbrowser&color=%2300539F)",
   "main": "index.js",
   "directories": {
