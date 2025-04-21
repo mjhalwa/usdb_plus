@@ -8,9 +8,9 @@ if ($?) {
   New-Item -ItemType Directory -Force -Path ./build/firefox
   New-Item -ItemType Directory -Force -Path ./build/chrome
 
-  ("./scripts", "./options", "./icon.svg") | ForEach-Object {
+  ("./scripts", "./options", "./icons") | ForEach-Object {
     Copy-Item -Force -Recurse $_ ./build/firefox
-    Copy-Item -Force -Recurse $_ ./build/chrome  
+    Copy-Item -Force -Recurse $_ ./build/chrome
   }
 
   Copy-Item -Force -Recurse "./lib" ./build/chrome  
