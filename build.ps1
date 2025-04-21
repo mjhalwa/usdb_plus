@@ -15,6 +15,11 @@ if ($?) {
 
   Copy-Item -Force -Recurse "./lib" ./build/chrome  
 
-  Copy-Item -Force -Recurse ./manifest.firefox.json ./build/firefox/manifest.json
-  Copy-Item -Force -Recurse ./manifest.chrome.json ./build/chrome/manifest.json
+  # remove comments
+  ("firefox", "chrome") | ForEach-Object {
+    Get-Content ./manifest.$_.json `
+    | Select-String -NotMatch "^\s*//" `
+    | ForEach-Object { $_ -replace "\s+//.*$",""} `
+    > ./build/$_/manifest.json
+  }
 }
