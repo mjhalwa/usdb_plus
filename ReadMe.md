@@ -1,8 +1,11 @@
 # USDB Plus
 
-![Firefox Extension Badge](https://img.shields.io/badge/Mozilla_Firefox-Mozilla_Firefox_Webbrowser?logo=firefoxbrowser&color=%2300539F)
+![Firefox](https://img.shields.io/badge/Firefox-FF7139?logo=Firefox&logoColor=white)
+![Google Chrome](https://img.shields.io/badge/Google%20Chrome-4285F4?logo=GoogleChrome&logoColor=white)
 
 <a href="https://addons.mozilla.org/addon/usdb-plus/"><img src="https://blog.mozilla.org/addons/files/2015/11/get-the-addon.png" alt="Get USDB Plus for Firefox"></a>
+<a href="https://chromewebstore.google.com/detail/usdb-plus/anamejngppfoelibaphlmbaofgcfgcnn
+"><img src="https://developer.chrome.com/static/docs/webstore/branding/image/206x58-chrome-web-bcb82d15b2486.png?hl=de" alt="Get USDB Plus for Google Chrome"></a>
 
 Web browser extension to provided extras to [USDB](https://usdb.animux.de)
 
@@ -18,7 +21,9 @@ without
 
 - highlight specific USDB IDs in search results and detail pages
 - dynamic number of USDB ID lists with individual color settings and label
-- Sync lists via [Firefox Sync](https://www.mozilla.org/de/firefox/sync/) to use the same configuration on all of your devices.
+- additioal columns in USDB search results:
+  - USDB ID and
+  - [USDB-Syncer Metatag](https://github.com/bohning/usdb_syncer/wiki/Meta-Tags) columns to search results
 
 ## Development
 
